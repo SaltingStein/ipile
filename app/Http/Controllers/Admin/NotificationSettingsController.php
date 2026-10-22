@@ -45,7 +45,7 @@ class NotificationSettingsController extends Controller
             'events' => $events,
             'smsEnabled' => $sms->isEnabled(),
             'smsMaxLength' => self::SMS_MAX_LENGTH,
-            'integrationsUrl' => route('admin.integrations.index'),
+            'smsSetupUrl' => route('admin.integrations.show', 'smpp'),
         ]);
     }
 

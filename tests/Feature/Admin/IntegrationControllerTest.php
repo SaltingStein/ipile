@@ -81,6 +81,27 @@ class IntegrationControllerTest extends TestCase
         $response->assertDontSee('sk_live_hidden');
     }
 
+    public function test_sms_provider_page_shows_how_to_get_a_telko_account(): void
+    {
+        $response = $this->actingAs($this->integrationsManager())->get(route('admin.integrations.show', 'smpp'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/IntegrationProvider')
+            ->where('provider.label', 'TelKo SMS (SMPP)')
+            ->where('provider.links.0', ['label' => 'Request a TelKo SMS account', 'url' => 'https://telko-ms.com/contact'])
+            ->where('provider.links', fn ($links) => collect($links)->pluck('url')->every(
+                fn (string $url) => preg_match('#^(https://|mailto:|tel:)#', $url) === 1
+            )));
+    }
+
+    public function test_providers_without_account_links_send_an_empty_list(): void
+    {
+        $response = $this->actingAs($this->integrationsManager())->get(route('admin.integrations.show', 'paystack'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('provider.links', []));
+    }
+
     public function test_saving_stores_the_settings_encrypted(): void
     {
         $response = $this->actingAs($this->integrationsManager())->put(route('admin.integrations.update', 'paystack'), [

@@ -75,6 +75,7 @@ class IntegrationManager
                 'description' => $definition->description,
                 'is_enabled' => (bool) $integration?->is_enabled,
                 'can_test' => $definition->tester !== null,
+                'links' => $definition->links,
                 'fields' => array_map(fn (IntegrationField $field) => [
                     ...$field->toArray(),
                     'value' => $field->secret ? null : ($config[$field->name] ?? null),

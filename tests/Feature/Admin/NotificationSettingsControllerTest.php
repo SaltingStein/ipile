@@ -27,7 +27,8 @@ class NotificationSettingsControllerTest extends TestCase
                 ->where('events.0.available_channels', ['mail', 'sms'])
                 ->where('events.0.channels', ['mail'])
                 ->where('events.0.customised', false)
-                ->where('smsEnabled', false));
+                ->where('smsEnabled', false)
+                ->where('smsSetupUrl', route('admin.integrations.show', 'smpp')));
     }
 
     public function test_manager_saves_channels_and_wording(): void
