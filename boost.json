@@ -1,0 +1,26 @@
+{
+    "agents": [
+        "claude_code",
+        "codex"
+    ],
+    "cloud": true,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "sail": false,
+    "skills": [
+        "infer-conventions",
+        "deploying-to-cloud",
+        "ai-sdk-development",
+        "laravel-best-practices",
+        "testing-best-practices",
+        "socialite-development",
+        "inertia-react-development",
+        "tailwindcss-development",
+        "ipile-api",
+        "ipile-help-docs",
+        "ipile-notifications",
+        "ipile-pages",
+        "ipile-settings"
+    ]
+}

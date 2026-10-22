@@ -1,0 +1,12 @@
+---
+title: {{ title }}
+summary: What you can do on the {{ title }} page.
+order: 100
+draft: true
+{{ permissionLine }}---
+
+Write this for the people who use the page, not for developers: what the page is for, and the steps to get things done. Remove `draft: true` above when it is ready; drafts only show while the app runs locally.
+
+## Open the page
+
+{{ openStep }}

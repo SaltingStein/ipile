@@ -1,0 +1,14 @@
+import AppLayout from '../components/AppLayout';
+import EmptyState from '../components/ui/EmptyState';
+
+/**
+ * The {{ title }} page ({{ path }}). Its data comes from app/Http/Controllers/{{ class }}Controller.php.
+ */
+export default function {{ class }}() {
+    return (
+        <AppLayout title="{{ title }}">
+            <h1 className="text-2xl font-bold">{{ title }}</h1>
+            <EmptyState title="Nothing here yet" description="Build the {{ title }} page in resources/js/pages/{{ class }}.tsx." />
+        </AppLayout>
+    );
+}

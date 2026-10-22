@@ -1,0 +1,52 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Services\Security\Signals\SecuritySignal;
+use App\Services\Security\Signals\SignalContext;
+use App\Services\Security\Signals\SignalResult;
+
+/**
+ * Evidence Aegis adds to each security event's score. Register it in a service provider's boot():
+ *
+ *     Security::signal({{ class }}::class);
+ *
+ * Keep it cheap: no calls to other services, and at most one indexed query.
+ */
+class {{ class }} implements SecuritySignal
+{
+    public function key(): string
+    {
+        return '{{ key }}';
+    }
+
+    public function label(): string
+    {
+        return '{{ label }}';
+    }
+
+    public function description(): string
+    {
+        return 'Describe in one sentence when this signal fires.';
+    }
+
+    /**
+     * How much this signal counts (0-1) when it fires at full strength.
+     */
+    public function weight(): float
+    {
+        return 0.5;
+    }
+
+    public function evaluate(SignalContext $context): SignalResult
+    {
+        // Only look at the events this signal is about, e.g. 'payouts.requested'.
+        if ($context->definition->key !== 'area.what_happened') {
+            return SignalResult::none();
+        }
+
+        // $context gives you the user, IP address, device and network hashes, time, previous event and context values.
+        // Return a 0-1 score with a short reason when it fires: new SignalResult(0.8, 'Why it fired.').
+        return SignalResult::none();
+    }
+}

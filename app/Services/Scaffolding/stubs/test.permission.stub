@@ -1,0 +1,35 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
+use Tests\TestCase;
+
+class {{ class }}PageTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_guests_are_sent_to_sign_in(): void
+    {
+        $this->get(route('{{ routeName }}'))->assertRedirect(route('login'));
+    }
+
+    public function test_users_without_the_permission_are_refused(): void
+    {
+        Permission::findOrCreate('{{ permission }}');
+
+        $this->actingAs(User::factory()->create())->get(route('{{ routeName }}'))->assertForbidden();
+    }
+
+    public function test_users_with_the_permission_can_open_the_page(): void
+    {
+        Permission::findOrCreate('{{ permission }}');
+        $user = User::factory()->create()->givePermissionTo('{{ permission }}');
+
+        $this->actingAs($user)->get(route('{{ routeName }}'))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('{{ class }}'));
+    }
+}
