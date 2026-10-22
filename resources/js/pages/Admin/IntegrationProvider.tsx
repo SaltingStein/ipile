@@ -26,6 +26,7 @@ interface IntegrationProviderState {
     description: string;
     is_enabled: boolean;
     can_test: boolean;
+    links: { label: string; url: string }[];
     fields: IntegrationFieldState[];
     last_test: { at: string; succeeded: boolean | null; message: string } | null;
 }
@@ -69,6 +70,32 @@ export default function IntegrationProviderPage({ groupLabel, provider, indexUrl
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{groupLabel}</p>
                 <p className="text-sm text-slate-400">{provider.description}</p>
             </div>
+
+            {provider.links.length > 0 && (
+                <div className="max-w-xl">
+                    <Panel title="Get an account" description="No account yet? Contact the provider to open one and receive the details below.">
+                        <ul className="flex flex-wrap gap-2">
+                            {provider.links.map((link) => {
+                                const opensNewTab = link.url.startsWith('https://');
+
+                                return (
+                                    <li key={link.url}>
+                                        <a
+                                            href={link.url}
+                                            target={opensNewTab ? '_blank' : undefined}
+                                            rel={opensNewTab ? 'noopener noreferrer' : undefined}
+                                            className="inline-flex rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-emerald-300 transition hover:border-emerald-500/50 hover:text-emerald-200"
+                                        >
+                                            {link.label}
+                                            {opensNewTab && <span aria-hidden="true">&nbsp;↗</span>}
+                                        </a>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </Panel>
+                </div>
+            )}
 
             <form onSubmit={submit} className="flex max-w-xl flex-col gap-4">
                 <Panel title="Provider settings">

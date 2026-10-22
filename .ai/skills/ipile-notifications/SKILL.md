@@ -38,7 +38,7 @@ All email and SMS about things that happen in the app go through `App\Services\N
 
 ## Good to know
 
-- Email uses the `dashboard` mailer (ZeptoMail when enabled in Integrations, otherwise the fallback mailer). SMS needs Telco SMS enabled and the user's `phone_number`.
+- Email uses the `dashboard` mailer (ZeptoMail when enabled in Integrations, otherwise the fallback mailer). SMS needs TelKo SMS (SMPP) enabled and the user's `phone_number`.
 - Sending failures are logged and never break the action that triggered them.
 - A one-off SMS that is not a user-facing event: `app(SmsSender::class)->queue($to, $text, $user)`.
 

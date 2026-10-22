@@ -69,8 +69,9 @@ class IntegrationCatalog
                     new IntegrationField('contract_code', 'Contract code'),
                     IntegrationField::select('environment', 'Environment', ['sandbox', 'live']),
                 ]),
-            new IntegrationDefinition('smpp', IntegrationType::Sms, 'Telco SMS (SMPP)',
-                'Send SMS directly through a telco or aggregator SMPP account (SMPP v3.4). Run `php artisan sms:receipts` under a process supervisor to record delivery receipts.', [
+            // TelKo (TELKO-MS, Lagos) issues SMPP accounts on request; there is no self-serve sign-up, so the links lead to their team.
+            new IntegrationDefinition('smpp', IntegrationType::Sms, 'TelKo SMS (SMPP)',
+                'Send SMS through a TelKo A2P bulk SMS account over SMPP v3.4. No account yet? Open settings for TelKo’s contact details. Any other SMPP v3.4 provider works too. Run `php artisan sms:receipts` under a process supervisor to record delivery receipts.', [
                     new IntegrationField('host', 'Host'),
                     new IntegrationField('port', 'Port', input: 'number', help: 'Usually 2775.'),
                     new IntegrationField('system_id', 'System ID'),
@@ -79,7 +80,13 @@ class IntegrationCatalog
                     new IntegrationField('source_address', 'Sender ID', help: 'The approved sender name (max 11 characters) or number.'),
                     IntegrationField::select('bind_mode', 'Bind mode', ['transmitter', 'transceiver'], 'Use transceiver if your SMSC sends delivery receipts on the same session.'),
                     new IntegrationField('default_country_code', 'Default country code', required: false, help: 'Used for local numbers such as 0803…; defaults to 234 (Nigeria).', pattern: '/^\d{1,4}$/'),
-                ], SmppTester::class),
+                ], SmppTester::class, [
+                    ['label' => 'Request a TelKo SMS account', 'url' => 'https://telko-ms.com/contact'],
+                    ['label' => 'About TelKo bulk SMS', 'url' => 'https://telko-ms.com/services/bulk-sms'],
+                    ['label' => 'Email servicedesk@telko-ms.com', 'url' => 'mailto:servicedesk@telko-ms.com'],
+                    ['label' => 'Call +234 904 944 4444', 'url' => 'tel:+2349049444444'],
+                    ['label' => 'Chat on WhatsApp', 'url' => 'https://wa.me/2349049444444'],
+                ]),
             new IntegrationDefinition('zeptomail', IntegrationType::Mail, 'Zoho ZeptoMail',
                 'Transactional email (verification, password reset, invitations, notifications).', [
                     IntegrationField::secret('api_token', 'Send Mail token', 'From Mail Agents → SMTP/API → API in ZeptoMail. Paste the token only, without "Zoho-enczapikey".'),

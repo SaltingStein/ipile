@@ -10,6 +10,7 @@ final readonly class IntegrationDefinition
     /**
      * @param  list<IntegrationField>  $fields
      * @param  class-string<IntegrationTester>|null  $tester  Checks the credentials against the provider; null until its driver exists.
+     * @param  list<array{label: string, url: string}>  $links  Where an operator gets an account and credentials (https, mailto: or tel:), shown on the provider's settings page.
      */
     public function __construct(
         public string $provider,
@@ -18,6 +19,7 @@ final readonly class IntegrationDefinition
         public string $description,
         public array $fields,
         public ?string $tester = null,
+        public array $links = [],
     ) {}
 
     public function field(string $name): ?IntegrationField

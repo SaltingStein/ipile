@@ -31,7 +31,7 @@ class SmsSender
     public function queue(string $to, string $text, ?User $user = null): SmsMessage
     {
         $config = $this->integrations->enabledConfig(self::PROVIDER)
-            ?? throw new SmsException('SMS is not enabled. Configure Telco SMS (SMPP) in Admin → Integrations.');
+            ?? throw new SmsException('SMS is not enabled. Configure TelKo SMS (SMPP) in Admin → Integrations.');
 
         $number = PhoneNumber::normalize($to, (string) ($config['default_country_code'] ?? '234'))
             ?? throw new InvalidArgumentException("[{$to}] is not a valid phone number.");

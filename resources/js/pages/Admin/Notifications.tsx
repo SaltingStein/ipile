@@ -29,10 +29,10 @@ interface NotificationsProps {
     events: NotificationEventSettings[];
     smsEnabled: boolean;
     smsMaxLength: number;
-    integrationsUrl: string;
+    smsSetupUrl: string;
 }
 
-export default function Notifications({ events, smsEnabled, smsMaxLength, integrationsUrl }: NotificationsProps) {
+export default function Notifications({ events, smsEnabled, smsMaxLength, smsSetupUrl }: NotificationsProps) {
     const eventsByGroup = events.reduce<Record<string, NotificationEventSettings[]>>((carry, event) => {
         if (!carry[event.group]) {
             carry[event.group] = [];
@@ -52,7 +52,7 @@ export default function Notifications({ events, smsEnabled, smsMaxLength, integr
             {!smsEnabled && (
                 <p className="rounded-lg border border-amber-800 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
                     SMS is off, so SMS messages are skipped.{' '}
-                    <Link href={integrationsUrl} className="font-semibold underline">Set up Telco SMS in Integrations</Link>
+                    <Link href={smsSetupUrl} className="font-semibold underline">Set up TelKo SMS</Link>
                 </p>
             )}
             {groups.map(([group, groupEvents]) => (
@@ -139,7 +139,7 @@ function EventPanel({ event, smsEnabled, smsMaxLength }: { event: NotificationEv
                         onChange={(on) => toggle('mail', on)} />
                     {supportsSms && (
                         <Checkbox label="SMS" name={`${event.key}-sms`} checked={data.channels.includes('sms')}
-                            description={smsEnabled ? 'Sent to the phone number on the account.' : 'Skipped until Telco SMS is set up.'}
+                            description={smsEnabled ? 'Sent to the phone number on the account.' : 'Skipped until TelKo SMS is set up.'}
                             onChange={(on) => toggle('sms', on)} />
                     )}
                 </fieldset>

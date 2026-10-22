@@ -38,10 +38,10 @@ Notify::event('team.invitation')
 | `app/Services/Notifications/Notify.php` | Entry point; returns a `PendingNotification` builder |
 | `app/Services/Notifications/NotificationSettings.php` | Reads and writes the dashboard choices; fills in `{placeholders}` |
 | `app/Notifications/EventNotification.php` | The Laravel notification that is actually sent |
-| `app/Notifications/Channels/SmsChannel.php` | SMS delivery through Telco SMS (SMPP) in Integrations |
+| `app/Notifications/Channels/SmsChannel.php` | SMS delivery through TelKo SMS (SMPP) in Integrations |
 
 - **Email** goes through the `dashboard` mailer: ZeptoMail when it is enabled in Admin → Integrations, otherwise the fallback mailer.
-- **SMS** is skipped when Telco SMS is not enabled, or when the recipient has no phone number (`users.phone_number`).
+- **SMS** is skipped when TelKo SMS is not enabled, or when the recipient has no phone number (`users.phone_number`).
 - **Failures never break the caller.** If sending fails, the error is reported to the log and the action that triggered it (a payment webhook, a sign-up) still completes.
 - Laravel's own **verification** and **password reset** emails keep their notification classes, but their wording comes from the `auth.verify_email` and `auth.password_reset` templates (see `AppServiceProvider`).
 

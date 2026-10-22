@@ -31,7 +31,7 @@ class ListenForSmsReceipts extends Command
             $config = $integrations->enabledConfig(SmsSender::PROVIDER);
 
             if ($config === null) {
-                $this->error('Telco SMS (SMPP) is not enabled in Admin → Integrations.');
+                $this->error('TelKo SMS (SMPP) is not enabled in Admin → Integrations.');
 
                 return self::FAILURE;
             }

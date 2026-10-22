@@ -5,7 +5,7 @@ A Laravel + Inertia React starter kit for building products fast. Out of the box
 - **Accounts:** sign-in, registration, email verification, two-factor, trusted devices, sessions, social sign-in, API tokens
 - **Teams:** invitations, roles, switching
 - **Admin area:** roles and permissions, branding, themes, sign-in rules, notifications, legal pages and consent notices
-- **Integrations, configured in the dashboard:** Nigerian payment gateways (Paystack, Squad, Flutterwave, OPay), telco SMS over SMPP, ZeptoMail, Google Analytics
+- **Integrations, configured in the dashboard:** Nigerian payment gateways (Paystack, Squad, Flutterwave, OPay), SMS over SMPP with [TelKo](https://telko-ms.com) (or any SMPP v3.4 provider), ZeptoMail, Google Analytics
 - **Security monitoring (Aegis):** risk scoring, incidents and automatic responses
 - **A versioned API** (`/api/v1`) with generated docs, plus an in-app **Help Center**
 
@@ -40,6 +40,10 @@ PHP 8.3+, Composer, Node.js and a database supported by Laravel.
 ## Contributing
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). To report a security vulnerability, follow [SECURITY.md](SECURITY.md) instead of opening an issue.
+
+## Acknowledgements
+
+Ìpìlẹ̀ was built with help from AI coding assistants: GitHub Copilot, Google Gemini and Anthropic Claude.
 
 ## License
 
