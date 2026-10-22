@@ -1,0 +1,5 @@
+# Every change needs a review from the maintainer.
+* @feladeveloper
+
+# Workflow changes can run code with repository permissions; review them closely.
+/.github/ @feladeveloper

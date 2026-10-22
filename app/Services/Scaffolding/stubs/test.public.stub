@@ -1,0 +1,18 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
+
+class {{ class }}PageTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_anyone_can_open_the_page(): void
+    {
+        $this->get(route('{{ routeName }}'))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('{{ class }}'));
+    }
+}

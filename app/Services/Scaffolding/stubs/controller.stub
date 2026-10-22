@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+/**
+ * The {{ title }} page. Pass the page's data here; it arrives as props in resources/js/pages/{{ class }}.tsx.
+ */
+class {{ class }}Controller extends Controller
+{
+    public function __invoke(Request $request): Response
+    {
+        return Inertia::render('{{ class }}', [
+            //
+        ]);
+    }
+}

@@ -1,0 +1,16 @@
+import PublicLayout from '../components/PublicLayout';
+import EmptyState from '../components/ui/EmptyState';
+
+/**
+ * The public {{ title }} page ({{ path }}). Its data comes from app/Http/Controllers/{{ class }}Controller.php.
+ */
+export default function {{ class }}() {
+    return (
+        <PublicLayout title="{{ title }}">
+            <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-6 py-10">
+                <h1 className="text-3xl font-semibold">{{ title }}</h1>
+                <EmptyState title="Nothing here yet" description="Build the {{ title }} page in resources/js/pages/{{ class }}.tsx." />
+            </main>
+        </PublicLayout>
+    );
+}
