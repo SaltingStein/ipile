@@ -42,9 +42,30 @@ Each person's access lasts only as long as their claim (the **Claim lifetime**),
 1. Switch on an AI model first in **Admin → Integrations → AI models**.
 2. In **Admin → Platform → Site assistant**, choose **Built-in assistant**, tick **Assistant is on** and choose the **AI model**.
 3. Set **Messages per person per day**.
-4. Under **Business figures it may read**, tick the figures it may report, such as accounts, campaign results or payments. Figures your own app adds appear in the same list and work the same way. A person only gets a figure if you tick it here **and** they have the permission shown next to it, so nobody learns more than their own admin pages show them.
-5. Under **When someone asks for protected data**, choose what happens to their account (see below).
-6. Choose **Save assistant**.
+4. Leave **Answer from the Help Center** ticked so it can search your help articles to explain how things work. Untick it and the assistant points people to the Help Center instead.
+5. Optionally, describe your business under **About your business**: what you offer and who your customers are, in up to 1,500 characters. The assistant uses it as background, and it never overrides the assistant's rules. Do not include passwords, keys or personal details, because anyone using the assistant may be told what you write.
+6. Under **Business figures it may read**, tick the figures it may report, such as accounts, campaign results or payments. Figures your own app adds appear in the same list and work the same way. A person only gets a figure if you tick it here **and** they have the permission shown next to it, so nobody learns more than their own admin pages show them.
+7. Under **When someone asks for protected data**, choose what happens to their account (see below).
+8. Choose **Save assistant**.
+
+## Choose who can use the assistant
+
+Using the assistant needs the `use_ai_assistant` permission. Every full account gets the **member** role, which has it, and so do the **admin** and **marketing** roles, so everyone with a full account can use the assistant unless you change this. Guest accounts never can.
+
+To limit it, open **Admin → Security → Roles & permissions** and remove `use_ai_assistant` from the **member** role. Then give it only to the roles that should keep it. People who lose the permission no longer see the assistant, whether it is the built-in one or a third-party widget.
+
+## Review assistant activity
+
+Every request to the built-in assistant is recorded, whatever happened to it. Open **Admin → Platform → Assistant activity**; this needs the `view_ai_activity` permission, which the **admin** role has.
+
+1. Filter by person, by a role they had at the time, by mode, by outcome or by date, then choose **Apply filters**.
+2. Choose a request's time to open it. You see the question and the answer, the roles, team and modes the person had **when they asked** (later changes do not alter the record), the tools the assistant used with shortened, masked arguments, and how long it took.
+
+Outcomes are **Answered**, **Beyond their access** (a staff question from someone without that staff mode, answered by the normal assistant instead), **Over the daily limit**, **Refused (protected data)** and **AI service error**. Refused requests keep no message here; the incident in **Admin → Security → Incidents** shows what was asked. Questions beyond someone's access and repeated messages past the daily limit are also recorded in threat monitoring.
+
+## Choose how long chats and activity are kept
+
+People's chats and the activity log are kept for **90 days** unless you change it. Under **Chats and activity log**, set **Keep chats and the activity log for (days)** to between 7 and 730, then choose **Save assistant**. Older chats and log entries are deleted every night, so your server must run scheduled tasks.
 
 ## Switch on staff modes
 
@@ -56,7 +77,19 @@ Staff modes let people who run the site use the same assistant for site guidance
 1. In **Admin → Platform → Site assistant**, under **Staff modes**, tick the modes to offer and choose **Save assistant**.
 2. In **Admin → Security → Roles & permissions**, give the permissions to the roles that should use them. The **admin** role has both by default.
 
-Staff modes are only offered on the built-in **Assistant** page, never through a third-party widget. Screening, the daily message limit and the lock-out rules below apply in every mode: staff who ask for passwords, codes, keys, other people's data or protected system data are locked out like anyone else. Every answered message is recorded in **Admin → Security** with the mode that answered it, never the message itself.
+Staff modes are offered in the built-in assistant (its page and its chat bubble), never through a third-party widget. Screening, the daily message limit and the lock-out rules below apply in every mode: staff who ask for passwords, codes, keys, other people's data or protected system data are locked out like anyone else. Every request is recorded in **Assistant activity** (below).
+
+## Allow analytics insights
+
+1. Switch on the built-in assistant and the **Analytics** staff mode.
+2. Under **Analytics insights**, select the summaries staff should be able to ask about, then choose **Save assistant**. Nothing is selected by default.
+3. Give staff the Analytics permission and the additional permission shown beside each insight. A team insight also needs membership of the current team and the team role required for that data.
+
+Built-in insights cover sign-ups over time, recently active accounts, new teams, payment breakdowns, SMS delivery counts and security incident counts. Results cover the last 30 days and at most 50 groups. They contain counts and totals rather than individual records.
+
+SMS and security counts depend on the site's scheduled refresh. If a summary has not been refreshed or is more than 15 minutes old, the assistant says it is unavailable. Ask the site operator to check scheduled work. The assistant still cannot read SMS bodies, recipients or raw security logs.
+
+Changing team changes the data available to a team insight. Removing a permission, unticking an insight or switching the assistant off takes effect on subsequent tool calls. These tools are only available in the built-in staff Analytics mode.
 
 ## Choose what happens to someone who asks for protected data
 

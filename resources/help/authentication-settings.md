@@ -17,8 +17,16 @@ When enabled, **Email sign-in link** also appears in the summary. The summary sh
 ## Control new accounts and guest access
 
 1. Under **Sign-in rules**, set **Allow new registrations**. Turning it off closes the registration page, registration through apps and new accounts through connected providers. Existing accounts can still sign in.
-2. Set **Allow guest access**. Turning it off hides guest quick-start forms on the home page and prevents new guest sessions. Existing guest sessions continue to work. This is separate from registration, so close both if you want to prevent both kinds of new account.
+2. Set **Allow guest access**. Guest access lets visitors try the site with just a nickname, without creating an account. It is off unless you turn it on (sites that already had guest accounts keep it on). While it is off, the home page offers **Create account** and **Sign in** instead, and no new guest accounts can be started. Existing guests can keep using their account and can still create a full account. This is separate from registration, so close both if you want to prevent both kinds of new account.
 3. Choose **Save sign-in rules**.
+
+### Word the guest button your way
+
+While **Allow guest access** is ticked, you can fill in **Guest button wording**, for example "Try the demo", and **Guest name field wording**, the hint shown in the empty name field. Each can be up to 40 characters. Leave them blank to use the home page design's own wording, then choose **Save sign-in rules**.
+
+### Delete unused guest accounts
+
+Set **Delete unused guest accounts after (days)** to remove guest accounts nobody has used for that many days. Enter **0** to keep them (the default), or at least **7**. Deleted guest accounts cannot be recovered, and full accounts are never affected. Clean-up runs once a night, so your server must run scheduled tasks.
 
 ## Allow email sign-in links
 
@@ -57,5 +65,9 @@ Choose **Save sign-in rules** after changing these values. A token that no longe
 5. Check **Available sign-in methods** and test the sign-in flow using an account you control.
 
 Client secrets are stored encrypted and never shown again. Leave the secret blank on a later save to keep the saved value. Only providers supported by this build are listed.
+
+Use the provider's **Test connection** button after saving to check its consent flow, including while the provider is switched off. The test does not create or connect an account.
+
+Select **Require profile completion for connected sign-up** under **Sign-in rules** to ask new connected-account users to confirm their name and answer the published sign-up questions before creating an account. Clear it for automatic registration. Choose **Save sign-in rules** after changing it.
 
 See [Set up connected sign-in providers](/help/oauth-providers) for Google, GitHub, LinkedIn and X setup and troubleshooting.

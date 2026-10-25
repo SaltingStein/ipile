@@ -15,6 +15,8 @@ class IpileFeatureTest extends TestCase
 
     public function test_guest_onboarding_creates_a_guest_user_and_redirects_to_dashboard(): void
     {
+        Setting::store(AuthenticationSettings::GUEST_ACCESS_ENABLED, '1');
+
         $response = $this->post(route('guest.start'), [
             'nickname' => 'Ada',
         ]);
@@ -30,6 +32,8 @@ class IpileFeatureTest extends TestCase
 
     public function test_guest_onboarding_requires_a_nickname(): void
     {
+        Setting::store(AuthenticationSettings::GUEST_ACCESS_ENABLED, '1');
+
         $response = $this->from('/')->post(route('guest.start'), [
             'nickname' => '',
         ]);

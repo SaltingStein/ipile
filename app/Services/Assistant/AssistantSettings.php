@@ -22,6 +22,25 @@ class AssistantSettings
 
     public const METRICS = 'assistant.metrics';
 
+    public const INSIGHTS = 'assistant.insights';
+
+    /** Whether the assistant answers from the Help Center (the App help capability). On by default. */
+    public const HELP_ENABLED = 'assistant.help_enabled';
+
+    /** What the business does, in the administrator's words, added to the assistant's instructions. */
+    public const BUSINESS_CONTEXT = 'assistant.business_context';
+
+    public const MAX_BUSINESS_CONTEXT = 1500;
+
+    /** Days chats and the interaction log (Admin → Site assistant → Activity) are kept. */
+    public const ACTIVITY_RETENTION_DAYS = 'assistant.activity_retention_days';
+
+    public const DEFAULT_ACTIVITY_RETENTION_DAYS = 90;
+
+    public const MIN_ACTIVITY_RETENTION_DAYS = 7;
+
+    public const MAX_ACTIVITY_RETENTION_DAYS = 730;
+
     public const DAILY_MESSAGES = 'assistant.daily_messages';
 
     public const LOCKOUT = 'assistant.lockout';
@@ -75,6 +94,46 @@ class AssistantSettings
         return max(1, min((int) Setting::valueOf(self::DAILY_MESSAGES, (string) self::DEFAULT_DAILY_MESSAGES), self::MAX_DAILY_MESSAGES));
     }
 
+    public function helpEnabled(): bool
+    {
+        return Setting::valueOf(self::HELP_ENABLED, '1') === '1';
+    }
+
+    public function businessContext(): ?string
+    {
+        return trim((string) Setting::valueOf(self::BUSINESS_CONTEXT, '')) ?: null;
+    }
+
+    public function activityRetentionDays(): int
+    {
+        return max(self::MIN_ACTIVITY_RETENTION_DAYS, min(self::MAX_ACTIVITY_RETENTION_DAYS, (int) Setting::valueOf(self::ACTIVITY_RETENTION_DAYS, (string) self::DEFAULT_ACTIVITY_RETENTION_DAYS)));
+    }
+
+    public function updateActivityRetention(int $days): void
+    {
+        Setting::store(self::ACTIVITY_RETENTION_DAYS, (string) $days);
+    }
+
+    public function updateCapabilities(bool $helpEnabled, ?string $businessContext): void
+    {
+        Setting::store(self::HELP_ENABLED, $helpEnabled ? '1' : '0');
+        Setting::store(self::BUSINESS_CONTEXT, trim((string) $businessContext));
+    }
+
+    /** @return list<string> */
+    public function insights(): array
+    {
+        $keys = json_decode(Setting::valueOf(self::INSIGHTS, '[]'), true);
+
+        return is_array($keys) ? array_values(array_filter($keys, 'is_string')) : [];
+    }
+
+    /** @param list<string> $keys */
+    public function updateInsights(array $keys): void
+    {
+        Setting::store(self::INSIGHTS, json_encode(array_values(array_unique($keys))));
+    }
+
     /**
      * Values of the staff modes administrators switched on.
      *
@@ -104,7 +163,7 @@ class AssistantSettings
     }
 
     /**
-     * @return array{source: string, enabled: bool, provider: string|null, metrics: list<string>, daily_messages: int, lockout: string, staff_modes: list<string>}
+     * @return array{source: string, enabled: bool, provider: string|null, metrics: list<string>, insights: list<string>, help_enabled: bool, business_context: string, activity_retention_days: int, daily_messages: int, lockout: string, staff_modes: list<string>}
      */
     public function all(): array
     {
@@ -113,6 +172,10 @@ class AssistantSettings
             'enabled' => Setting::valueOf(self::ENABLED, '0') === '1',
             'provider' => $this->provider(),
             'metrics' => $this->metrics(),
+            'insights' => $this->insights(),
+            'help_enabled' => $this->helpEnabled(),
+            'business_context' => $this->businessContext() ?? '',
+            'activity_retention_days' => $this->activityRetentionDays(),
             'daily_messages' => $this->dailyMessages(),
             'lockout' => $this->lockout(),
             'staff_modes' => $this->staffModes(),

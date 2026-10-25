@@ -2,6 +2,7 @@
 
 namespace App\Services\Integrations;
 
+use App\Services\Ai\AnthropicApi;
 use App\Services\Ai\Testers\GeminiTester;
 use App\Services\Ai\Testers\OllamaTester;
 use App\Services\Ai\Testers\OpenAiCompatibleTester;
@@ -16,7 +17,6 @@ use App\Services\Payments\Opay\OpayTester;
 use App\Services\Payments\Paystack\PaystackTester;
 use App\Services\Payments\Squad\SquadTester;
 use App\Services\Security\Analysis\AnthropicTester;
-use App\Services\Security\Analysis\ClaudeSecurityAnalyst;
 use App\Services\Sms\SmppTester;
 
 /**
@@ -114,10 +114,10 @@ class IntegrationCatalog
                     new IntegrationField('public_url', 'Public or CDN address', required: false, help: 'Where visitors load the files, e.g. https://media.example.com or your R2 public bucket address. Leave blank to use the bucket’s own address.', pattern: '/^https:\/\/[^\s?#]+$/'),
                     new IntegrationField('path_style', 'Path-style addresses', input: 'select', required: false, options: ['no', 'yes'], help: 'Only needed for some self-hosted servers such as MinIO.'),
                 ], BucketStorageTester::class),
-            new IntegrationDefinition(ClaudeSecurityAnalyst::PROVIDER, IntegrationType::Ai, 'Anthropic Claude',
-                'Claude models for AI features, including the Aegis security analyst (also switch it on in Admin → Monitoring settings). The analyst receives a redacted summary of each incident (no names, emails or IP addresses) and explains it for an administrator; it never acts on accounts.', [
+            new IntegrationDefinition(AnthropicApi::PROVIDER, IntegrationType::Ai, 'Anthropic Claude',
+                'Claude models for AI features such as the site assistant and the Aegis security analyst (choose the analyst\'s model and switch it on in Admin → Security → Settings). The analyst receives a redacted summary of each incident (no names, emails or IP addresses) and explains it for an administrator; it never acts on accounts.', [
                     IntegrationField::secret('api_key', 'API key', 'From console.anthropic.com → API keys. Starts with sk-ant-.'),
-                    IntegrationField::select('model', 'Model', ClaudeSecurityAnalyst::MODELS, 'claude-opus-5-5 gives the most careful answers; claude-sonnet-5-5 and claude-haiku-5-5 cost less.'),
+                    IntegrationField::select('model', 'Model', AnthropicApi::MODELS, 'claude-opus-5-5 gives the most careful answers; claude-sonnet-5-5 and claude-haiku-5-5 cost less.'),
                     new IntegrationField('workspace_id', 'Workspace ID', required: false, help: 'Only for API keys that are not tied to a workspace: the ID of the workspace to use, from console.anthropic.com → Settings → Workspaces (starts with wrkspc_). Leave blank for keys created inside a workspace.', pattern: '/^wrkspc_[A-Za-z0-9]+$/'),
                 ], AnthropicTester::class),
             new IntegrationDefinition('openai', IntegrationType::Ai, 'OpenAI',

@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Ai\Insights;
+
+use App\Services\Assistant\AggregateInsight;
+
+class {{ name }} extends AggregateInsight
+{
+    public function key(): string
+    {
+        return '{{ key }}';
+    }
+
+    public function label(): string
+    {
+        return '{{ label }}';
+    }
+
+    public function permission(): ?string
+    {
+        return {{ permission }};
+    }
+
+    public function safeForAll(): bool
+    {
+        return {{ public }};
+    }
+
+    public function table(): string
+    {
+        return '{{ table }}';
+    }
+
+    public function scope(): string
+    {
+        return '{{ scope }}';
+    }
+
+    public function teamAbility(): string
+    {
+        return '{{ ability }}';
+    }
+}

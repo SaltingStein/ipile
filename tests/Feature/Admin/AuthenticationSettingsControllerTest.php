@@ -65,7 +65,11 @@ class AuthenticationSettingsControllerTest extends TestCase
             ->component('Admin/AuthenticationSettings')
             ->where('settings', [
                 'registration_enabled' => true,
-                'guest_access_enabled' => true,
+                'oauth_profile_required' => false,
+                'guest_access_enabled' => false,
+                'guest_button_label' => '',
+                'guest_field_label' => '',
+                'guest_retention_days' => 0,
                 'magic_link_enabled' => false,
                 'magic_link_expiry_minutes' => 15,
                 'trusted_device_days' => 30,
@@ -162,7 +166,7 @@ class AuthenticationSettingsControllerTest extends TestCase
             'two_factor_required_roles' => [],
         ])->assertSessionHasErrors('guest_access_enabled');
 
-        $this->assertTrue(app(AuthenticationSettings::class)->guestAccessEnabled());
+        $this->assertFalse(app(AuthenticationSettings::class)->guestAccessEnabled());
     }
 
     private function superAdmin(): User

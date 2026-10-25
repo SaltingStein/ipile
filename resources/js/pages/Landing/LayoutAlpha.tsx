@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import PublicLayout from '../../components/PublicLayout';
 import type { SharedPageProps } from '../../types';
 import GuestStartForm from '../../components/GuestStartForm';
+import LandingAuthLinks from '../../components/LandingAuthLinks';
 
 /**
  * "Fintech Clean" landing page: headline card. Colours come from the site theme.
@@ -17,7 +18,9 @@ export default function LayoutAlpha() {
                         Launch faster with a secure, flexible base built for fintech, SaaS, and digital consumer products.
                     </p>
                     <div className="mt-10 flex flex-wrap gap-4">
-                        <a href="/dashboard" className="rounded-full bg-emerald-500 px-6 py-3 font-medium text-slate-950 transition hover:bg-emerald-400">Go to dashboard</a>
+                        <LandingAuthLinks dashboardLabel="Go to dashboard"
+                            primaryClassName="rounded-full bg-emerald-500 px-6 py-3 font-medium text-slate-950 transition hover:bg-emerald-400"
+                            secondaryClassName="rounded-full border border-slate-700 px-6 py-3 font-medium text-slate-100 transition hover:border-slate-500" />
                         <GuestStartForm
                             buttonLabel="Continue as guest"
                             inputClassName="rounded-full border border-slate-700 bg-slate-950 px-5 py-3 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"

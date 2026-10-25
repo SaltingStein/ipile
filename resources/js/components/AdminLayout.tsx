@@ -1,4 +1,5 @@
 import AppBrand from './AppBrand';
+import AssistantBubble from './AssistantBubble';
 import BrandFooter from './BrandFooter';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -91,6 +92,7 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
                 </main>
             </div>
             <BrandFooter />
+            <AssistantBubble />
         </div>
     );
 }

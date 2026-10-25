@@ -199,7 +199,7 @@ export default function SecurityGuide({ checklist, modes, actions, incidentThres
                             <li>Run a queue worker (<Code>php artisan queue:work</Code>) and the scheduler (<Code>* * * * * php artisan schedule:run</Code>). The scheduler trains baselines at 02:30 and deletes old data at 02:15.</li>
                             <li>Leave the mode on <strong>Monitor only</strong> for a week or two. Review incidents, mark false positives, and tune thresholds in <Link href={urls.settings} className="text-emerald-300 hover:text-emerald-200">Settings</Link>.</li>
                             <li>Run <Code>php artisan security:train</Code> once you have a few days of events, so the Markov signal has data.</li>
-                            <li>Switch to <strong>Monitor and respond</strong>. Optionally enable the AI analyst (Integrations → Anthropic Claude, then Settings).</li>
+                            <li>Switch to <strong>Monitor and respond</strong>. Optionally enable the AI analyst (switch on a model in Integrations → AI models, then choose it in Settings).</li>
                         </ol>
                     </Panel>
 
@@ -329,7 +329,7 @@ decision     = max(event score, posture score)  →  incident at ≥ ${incidentT
                 </>}
 
                 {active === 'privacy' && (
-                    <Panel title="AI analyst and privacy" description="How the optional Claude analyst is kept safe.">
+                    <Panel title="AI analyst and privacy" description="How the optional AI analyst is kept safe, whichever AI model you choose.">
                         <ul className="list-disc space-y-2 pl-6 text-sm text-slate-300">
                             <li><strong>Advisory only.</strong> The Markov engine and your thresholds decide responses. The AI writes an explanation, a verdict and suggested steps for a human.</li>
                             <li><strong>Redacted input.</strong> Sent: event types, scores, signal names, relative timings, a device name such as “Chrome on Windows”, role names, account age and whether two-factor is on. Never sent: names, emails, phone numbers, IP addresses, raw user agents or text values.</li>
