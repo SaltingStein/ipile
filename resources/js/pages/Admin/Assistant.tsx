@@ -5,32 +5,41 @@ import Button from '../../components/ui/Button';
 import Checkbox from '../../components/ui/Checkbox';
 import Panel from '../../components/ui/Panel';
 import StatusMessage from '../../components/ui/StatusMessage';
+import TextArea from '../../components/ui/TextArea';
 import TextField from '../../components/ui/TextField';
 
 interface AssistantSettingsProps {
-    settings: { source: 'built_in' | 'third_party' | 'off'; enabled: boolean; provider: string | null; metrics: string[]; daily_messages: number; lockout: 'suspend' | 'sign_out'; staff_modes: string[] };
+    settings: { source: 'built_in' | 'third_party' | 'off'; enabled: boolean; provider: string | null; metrics: string[]; insights: string[]; help_enabled: boolean; business_context: string; activity_retention_days: number; daily_messages: number; lockout: 'suspend' | 'sign_out'; staff_modes: string[] };
+    insights: { key: string; label: string; permission: string | null; scope: string }[];
     widgetSettingsUrl: string | null;
     providers: { value: string; label: string }[];
     metrics: { key: string; label: string; description: string; permission: string }[];
     blockedTables: string[];
     protectedColumns: Record<string, string[]>;
     maxDailyMessages: number;
+    maxBusinessContext: number;
+    retentionLimits: { min: number; max: number };
+    activityUrl: string | null;
     providerUnavailable: boolean;
     staffModes: { value: string; label: string; permission: string }[];
 }
 
 const staffModeDescriptions: Record<string, string> = {
     core_guidance: 'Answers questions about running and extending the site (admin settings, security monitoring, the developer guide) from the internal guides as well as the Help Center.',
-    analytics: 'Summarises and compares the business figures ticked above that the person may see, with tables and changes over time.',
+    analytics: 'Summarises and compares the business figures ticked above and the analytics insights ticked below that the person may see, with tables and changes over time.',
 };
 
-export default function AssistantSettings({ settings, widgetSettingsUrl, providers, metrics, blockedTables, protectedColumns, maxDailyMessages, providerUnavailable, staffModes }: AssistantSettingsProps) {
+export default function AssistantSettings({ settings, insights, widgetSettingsUrl, providers, metrics, blockedTables, protectedColumns, maxDailyMessages, maxBusinessContext, retentionLimits, activityUrl, providerUnavailable, staffModes }: AssistantSettingsProps) {
     const form = useForm({
         source: settings.source,
         enabled: settings.enabled,
         // A model that has been switched off is not in the list, so it shows as not chosen.
         provider: providerUnavailable ? '' : (settings.provider ?? ''),
         metrics: settings.metrics,
+        insights: settings.insights,
+        help_enabled: settings.help_enabled,
+        business_context: settings.business_context,
+        activity_retention_days: String(settings.activity_retention_days),
         daily_messages: String(settings.daily_messages),
         lockout: settings.lockout,
         staff_modes: settings.staff_modes,
@@ -38,7 +47,7 @@ export default function AssistantSettings({ settings, widgetSettingsUrl, provide
 
     function save(event: FormEvent) {
         event.preventDefault();
-        form.transform((data) => ({ ...data, provider: data.provider || null, daily_messages: Number(data.daily_messages) }));
+        form.transform((data) => ({ ...data, provider: data.provider || null, daily_messages: Number(data.daily_messages), activity_retention_days: Number(data.activity_retention_days) }));
         form.put('/admin/assistant', { preserveScroll: true });
     }
 
@@ -94,6 +103,12 @@ export default function AssistantSettings({ settings, widgetSettingsUrl, provide
                         <TextField label="Messages per person per day" name="assistant-daily" type="number" min={1} max={maxDailyMessages} value={form.data.daily_messages}
                             onChange={(value) => form.setData('daily_messages', value)} error={form.errors.daily_messages} />
                     </div>
+                    <Checkbox label="Answer from the Help Center" name="assistant-help" checked={form.data.help_enabled}
+                        description="Searches your help articles to explain how things work. When off, it points people to the Help Center instead."
+                        onChange={(checked) => form.setData('help_enabled', checked)} />
+                    <TextArea label="About your business (optional)" name="assistant-context" rows={4} maxLength={maxBusinessContext}
+                        hint={`Background the assistant can use, such as what you offer and who your customers are. Up to ${maxBusinessContext} characters. Do not include passwords, keys or personal details: everyone who uses the assistant may be told it.`}
+                        value={form.data.business_context} onChange={(value) => form.setData('business_context', value)} error={form.errors.business_context} />
                 </Panel>
 
                 <Panel title="Business figures it may read" description="Counts and totals only. A person sees a figure only if you tick it here and they also have its permission, so nobody learns more than their admin pages show them.">
@@ -115,6 +130,26 @@ export default function AssistantSettings({ settings, widgetSettingsUrl, provide
                         ))}
                     </div>
                     {form.errors.staff_modes && <p className="text-sm text-rose-400">{form.errors.staff_modes}</p>}
+                </Panel>
+
+                <Panel title="Analytics insights" description="Extra read-only figures for the Analytics staff mode. A person gets an insight only if you tick it here and they have the permission shown; team insights only cover their current team. All start off.">
+                    <div className="flex flex-col gap-3">
+                        {insights.map((insight) => (
+                            <Checkbox key={insight.key} name={`insight-${insight.key}`} label={insight.label}
+                                description={`${insight.scope === 'team' ? 'Current team only' : 'Whole site'}. ${insight.permission ? `Needs the ${insight.permission} permission.` : 'Needs no extra permission.'}`}
+                                checked={form.data.insights.includes(insight.key)}
+                                onChange={(checked) => form.setData('insights', checked ? [...form.data.insights, insight.key] : form.data.insights.filter((key) => key !== insight.key))} />
+                        ))}
+                    </div>
+                    {form.errors.insights && <p role="alert" className="text-sm text-rose-400">{form.errors.insights}</p>}
+                    <p className="text-xs text-slate-400">Counts and totals for the last 30 days, at most 50 groups each. SMS and security counts come from summaries refreshed every few minutes, so the raw logs stay blocked.</p>
+                </Panel>
+
+                <Panel title="Chats and activity log" description="People see their own recent chats in the assistant. Every request is also logged with what the person was allowed at the time, the tools used and the outcome.">
+                    <TextField label="Keep chats and the activity log for (days)" name="assistant-retention" type="number" min={retentionLimits.min} max={retentionLimits.max}
+                        hint={`Between ${retentionLimits.min} and ${retentionLimits.max} days. Older chats and log entries are deleted every night.`}
+                        value={form.data.activity_retention_days} onChange={(value) => form.setData('activity_retention_days', value)} error={form.errors.activity_retention_days} />
+                    {activityUrl && <Link href={activityUrl} className="text-sm text-emerald-400 underline">Open assistant activity</Link>}
                 </Panel>
 
                 <Panel title="When someone asks for protected data" description="Applies to everyone, super admins included. The request is always refused, logged as a high-risk incident and emailed to administrators.">

@@ -11,7 +11,24 @@ class AuthenticationSettings
 {
     public const REGISTRATION_ENABLED = 'auth.registration_enabled';
 
+    public const OAUTH_PROFILE_REQUIRED = 'auth.oauth_profile_required';
+
     public const GUEST_ACCESS_ENABLED = 'auth.guest_access_enabled';
+
+    /** Optional wording of the guest quick-start button, e.g. "Try the demo". Blank uses each landing layout's own. */
+    public const GUEST_BUTTON_LABEL = 'auth.guest_button_label';
+
+    /** Optional placeholder of the guest quick-start name field. Blank uses "Pick a nickname". */
+    public const GUEST_FIELD_LABEL = 'auth.guest_field_label';
+
+    public const MAX_GUEST_LABEL_LENGTH = 40;
+
+    /** Days a guest account may go unused before `guests:prune` deletes it. Zero (the default) keeps them. */
+    public const GUEST_RETENTION_DAYS = 'auth.guest_retention_days';
+
+    public const MIN_GUEST_RETENTION_DAYS = 7;
+
+    public const MAX_GUEST_RETENTION_DAYS = 3650;
 
     public const MAGIC_LINK_ENABLED = 'auth.magic_link_enabled';
 
@@ -43,9 +60,36 @@ class AuthenticationSettings
         return Setting::valueOf(self::REGISTRATION_ENABLED, '1') === '1';
     }
 
+    /**
+     * Whether visitors may start a guest account without signing up. Off by default; installs that already had guest
+     * accounts were switched on by a migration so they keep working as before.
+     */
     public function guestAccessEnabled(): bool
     {
-        return Setting::valueOf(self::GUEST_ACCESS_ENABLED, '1') === '1';
+        return Setting::valueOf(self::GUEST_ACCESS_ENABLED, '0') === '1';
+    }
+
+    public function guestButtonLabel(): ?string
+    {
+        return Setting::valueOf(self::GUEST_BUTTON_LABEL, '') ?: null;
+    }
+
+    public function guestFieldLabel(): ?string
+    {
+        return Setting::valueOf(self::GUEST_FIELD_LABEL, '') ?: null;
+    }
+
+    /**
+     * Days a guest account may go unused before it is deleted. Zero keeps guest accounts.
+     */
+    public function guestRetentionDays(): int
+    {
+        return (int) Setting::valueOf(self::GUEST_RETENTION_DAYS, '0');
+    }
+
+    public function oauthProfileRequired(): bool
+    {
+        return Setting::valueOf(self::OAUTH_PROFILE_REQUIRED, '0') === '1';
     }
 
     public function magicLinkEnabled(): bool
@@ -97,14 +141,30 @@ class AuthenticationSettings
     /**
      * Persist the dashboard-managed authentication options. The API token settings are kept when not submitted.
      *
-     * @param  array{registration_enabled: bool, guest_access_enabled?: bool, magic_link_enabled?: bool, magic_link_expiry_minutes?: int, trusted_device_days: int, two_factor_required_roles: list<string>, api_token_lifetime_days?: int, api_token_idle_days?: int}  $settings
+     * @param  array{registration_enabled: bool, oauth_profile_required?: bool, guest_access_enabled?: bool, guest_button_label?: string|null, guest_field_label?: string|null, guest_retention_days?: int, magic_link_enabled?: bool, magic_link_expiry_minutes?: int, trusted_device_days: int, two_factor_required_roles: list<string>, api_token_lifetime_days?: int, api_token_idle_days?: int}  $settings
      */
     public function update(array $settings): void
     {
         Setting::store(self::REGISTRATION_ENABLED, $settings['registration_enabled'] ? '1' : '0');
 
+        if (array_key_exists('oauth_profile_required', $settings)) {
+            Setting::store(self::OAUTH_PROFILE_REQUIRED, $settings['oauth_profile_required'] ? '1' : '0');
+        }
+
         if (array_key_exists('guest_access_enabled', $settings)) {
             Setting::store(self::GUEST_ACCESS_ENABLED, $settings['guest_access_enabled'] ? '1' : '0');
+        }
+
+        if (array_key_exists('guest_button_label', $settings)) {
+            Setting::store(self::GUEST_BUTTON_LABEL, trim((string) $settings['guest_button_label']));
+        }
+
+        if (array_key_exists('guest_field_label', $settings)) {
+            Setting::store(self::GUEST_FIELD_LABEL, trim((string) $settings['guest_field_label']));
+        }
+
+        if (array_key_exists('guest_retention_days', $settings)) {
+            Setting::store(self::GUEST_RETENTION_DAYS, (string) $settings['guest_retention_days']);
         }
 
         if (array_key_exists('magic_link_enabled', $settings)) {

@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import PublicLayout from '../../components/PublicLayout';
 import type { SharedPageProps } from '../../types';
 import GuestStartForm from '../../components/GuestStartForm';
+import LandingAuthLinks from '../../components/LandingAuthLinks';
 
 /**
  * "Bold Dark" landing page: centred, high-impact hero with a glowing panel. Colours come from the site theme.
@@ -18,7 +19,9 @@ export default function LayoutBeta() {
                 </p>
                 <div className="mt-12 w-full max-w-2xl rounded-3xl border border-emerald-500/30 bg-slate-900/80 p-8 shadow-2xl shadow-emerald-500/20">
                     <div className="flex flex-wrap items-start justify-center gap-4">
-                        <a href="/dashboard" className="rounded-full bg-emerald-400 px-6 py-3 font-semibold text-slate-950 hover:bg-emerald-300">Launch app</a>
+                        <LandingAuthLinks dashboardLabel="Launch app"
+                            primaryClassName="rounded-full bg-emerald-400 px-6 py-3 font-semibold text-slate-950 hover:bg-emerald-300"
+                            secondaryClassName="rounded-full border border-emerald-500/40 px-6 py-3 font-semibold text-slate-100 hover:border-emerald-300" />
                         <GuestStartForm
                             buttonLabel="Quick start"
                             inputClassName="rounded-full border border-emerald-500/40 bg-slate-950 px-5 py-3 text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none"

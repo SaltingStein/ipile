@@ -8,7 +8,7 @@ export default function ConsentManager() {
     const { consent, legalLinks } = usePage<SharedPageProps>().props;
     const { config, choice } = consent;
     const { component } = usePage();
-    const isLandingPage = component.startsWith('Landing/');
+    const isLandingPage = component.startsWith('Landing/') || component === 'Marketing';
     const dialog = useRef<HTMLDialogElement>(null);
     const form = useForm({ version: config.version, analytics: choice?.analytics ?? false, marketing: choice?.marketing ?? false });
 

@@ -62,7 +62,7 @@ Confirm field names and endpoints against the provider's current documentation.
 
 ## AI models
 
-AI providers (Anthropic, OpenAI, Gemini, OpenRouter, Ollama, OpenAI-compatible) are integrations of type `ai`, used through `laravel/ai`. Never read AI keys from `.env` or `config/ai.php`; get the operator's provider at runtime: `app(AiModels::class)->provider('openai')` (null when switched off) and pass it to an agent: `->prompt($text, provider: [$provider])`, or return it from an agent's `provider()` method. A new AI provider needs a catalog entry, a driver in `AiModels::DRIVERS`, and a one-line tester subclass of `AiModelTester`. Test agents with the SDK fakes (`MyAgent::fake([...])`), never a real model.
+AI providers (Anthropic, OpenAI, Gemini, OpenRouter, Ollama, OpenAI-compatible) are integrations of type `ai`, used through `laravel/ai`. Never read AI keys from `.env` or `config/ai.php`; get the operator's provider at runtime: `app(AiModels::class)->provider('openai')` (null when switched off) and pass it to an agent: `->prompt($text, provider: [$provider])`, or return it from an agent's `provider()` method. Without a provider, agents use the dashboard default (`AiModels::defaultProvider()`: the site assistant's model, else the first switched-on one), never `.env`. A new AI provider needs a catalog entry, a driver in `AiModels::DRIVERS`, and a one-line tester subclass of `AiModelTester`. Test agents with the SDK fakes (`MyAgent::fake([...])`), never a real model.
 
 ## If the developer wants something different
 

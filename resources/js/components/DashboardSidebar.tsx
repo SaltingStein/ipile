@@ -28,7 +28,7 @@ export default function DashboardSidebar({ open, onNavigate }: DashboardSidebarP
         : [];
     const helpCenterLinks = [
         { label: 'Help', href: '/help' },
-        ...(assistantEnabled ? [{ label: 'Assistant config', href: '/assistant' }] : []),
+        ...(assistantEnabled ? [{ label: 'Assistant', href: '/assistant' }] : []),
     ];
     const linkClasses = (href: string) => {
         const path = href.split(/[?#]/)[0];

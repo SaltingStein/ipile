@@ -44,7 +44,12 @@ class CorePageCommandTest extends TestCase
             "    Route::get('/team-reports', TeamReportsController::class)->middleware('permission:view_reports')->name('team-reports');\n    ".PageScaffolder::SIGNED_IN_MARKER,
             $routes,
         );
-        $this->assertStringContainsString("use App\\Http\\Controllers\\DashboardController;\nuse App\\Http\\Controllers\\TeamReportsController;\nuse Illuminate\\Support\\Facades\\Route;", $routes);
+        // The import is added and the block stays sorted, whatever other routes the app already has.
+        preg_match_all('/^use ([^;]+);$/m', $routes, $imports);
+        $this->assertContains('App\\Http\\Controllers\\TeamReportsController', $imports[1]);
+        $sorted = $imports[1];
+        sort($sorted);
+        $this->assertSame($sorted, $imports[1]);
         $this->assertStringContainsString("    { label: 'Team reports', href: '/team-reports', permission: 'view_reports' },\n    ".PageScaffolder::NAVIGATION_MARKER, $this->read('resources/js/appNavigation.ts'));
 
         $this->assertStringContainsString("Inertia::render('TeamReports'", $this->read('app/Http/Controllers/TeamReportsController.php'));

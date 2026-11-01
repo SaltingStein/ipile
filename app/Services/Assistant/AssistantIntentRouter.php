@@ -16,7 +16,7 @@ use InvalidArgumentException;
  *    matches nothing is a follow-up and keeps the conversation's previous intent, or is end-user support.
  * 2. **Mode:** a staff intent is answered in its staff mode only when an administrator switched that mode on, the
  *    person has its permission and a full account, and the channel allows staff modes. Otherwise the product-facing
- *    assistant answers. Only the built-in assistant page is such a channel; the third-party widget's data connection
+ *    assistant answers. The built-in assistant (its page and chat bubble) is such a channel; the third-party widget's data connection
  *    ({@see WidgetDataServer}) never is.
  *
  * Routing never loosens screening: every message passes {@see AssistantGuard} before it is routed.
@@ -26,11 +26,14 @@ class AssistantIntentRouter
     /** The built-in assistant page (/assistant). */
     public const CHANNEL_PAGE = 'page';
 
+    /** The built-in assistant's chat bubble on signed-in pages (CORE-911). */
+    public const CHANNEL_BUBBLE = 'bubble';
+
     /** The third-party widget's data connection. Product-facing only. */
     public const CHANNEL_WIDGET = 'widget';
 
     /** Channels where staff modes may answer. */
-    public const STAFF_CHANNELS = [self::CHANNEL_PAGE];
+    public const STAFF_CHANNELS = [self::CHANNEL_PAGE, self::CHANNEL_BUBBLE];
 
     /**
      * Intent => rules matched against the lower-cased message. Order is the tie-break.
@@ -103,7 +106,7 @@ class AssistantIntentRouter
 
     public function allows(User $user, AssistantIntent $mode, string $channel): bool
     {
-        if (! in_array($channel, [self::CHANNEL_PAGE, self::CHANNEL_WIDGET], true)) {
+        if (! in_array($channel, [self::CHANNEL_PAGE, self::CHANNEL_BUBBLE, self::CHANNEL_WIDGET], true)) {
             throw new InvalidArgumentException("Unknown assistant channel [{$channel}].");
         }
 

@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\Controller;
 use App\Models\OAuthProvider;
 use App\Services\Auth\OAuthProviderRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Laravel\Socialite\Socialite;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Save an OAuth provider's client credentials from the dashboard. The secret is stored encrypted
@@ -15,6 +19,23 @@ use Illuminate\Validation\ValidationException;
  */
 class OAuthProviderController extends Controller
 {
+    public function test(Request $request, string $provider, OAuthProviderRegistry $providers): Response
+    {
+        abort_unless(array_key_exists($provider, OAuthProviderRegistry::SUPPORTED), 404);
+
+        if (! $providers->configure($provider, allowDisabled: true)) {
+            return back()->withErrors(['oauth' => __('Save a client ID and client secret before testing this provider.')]);
+        }
+
+        $request->session()->put(OAuthController::CONNECTION_TEST, [
+            'provider' => $provider,
+            'user_id' => $request->user()->getKey(),
+            'expires_at' => now()->addMinutes(10)->timestamp,
+        ]);
+
+        return Inertia::location(Socialite::driver($provider)->redirect()->getTargetUrl());
+    }
+
     /**
      * Update the provider credentials and enabled state.
      */

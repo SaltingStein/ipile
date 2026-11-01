@@ -70,7 +70,7 @@ class SecurityIncidentController extends Controller
                 'index' => route('admin.security.incidents.index'),
                 'update' => route('admin.security.incidents.update', $incident),
                 'analyze' => route('admin.security.incidents.analyze', $incident),
-                'integration' => route('admin.integrations.show', 'anthropic'),
+                'integration' => route('admin.security.settings.edit'),
                 'restore' => route('admin.security.incidents.restore', $incident),
             ],
             // Suspended accounts (e.g. by the site assistant's guard rails) can be restored from the incident.
@@ -121,7 +121,7 @@ class SecurityIncidentController extends Controller
     public function analyze(SecurityIncident $incident, SecurityAnalyst $analyst): RedirectResponse
     {
         if (! $analyst->isAvailable()) {
-            return back()->withErrors(['analysis' => __('Enable the Anthropic integration (Admin → Integrations) first.')]);
+            return back()->withErrors(['analysis' => __('Choose a switched-on AI model for incident analysis in Admin → Security → Settings first.')]);
         }
 
         $incident->forceFill(['ai_status' => SecurityIncident::AI_PENDING])->save();

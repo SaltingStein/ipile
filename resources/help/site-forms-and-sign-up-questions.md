@@ -20,7 +20,7 @@ Your questions now appear on the sign-up page below the password. Required quest
 
 To stop asking, choose **Draft** and **Save**. Answers already given are kept. The sign-up questions cannot be deleted.
 
-People who sign up with a connected account, such as Google, do not see these questions.
+To ask these questions during connected-account sign-up, open **Admin → Security → Sign-in & 2FA**, select **Require profile completion for connected sign-up** and choose **Save sign-in rules**. New connected-account users then answer the published questions before their account is created. Existing linked accounts do not repeat them.
 
 ## Create a site form
 
