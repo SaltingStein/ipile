@@ -123,8 +123,12 @@ class FormPageDesignTest extends TestCase
         $this->actingAs($form->team->owner)->delete(route('forms.destroy', $form));
         app(TeamManager::class)->delete($teamForm->team);
 
-        Storage::disk('public')->assertMissing($formPath);
+        // Deleting a team still removes its forms and their files at once (teams are not soft deleted).
         Storage::disk('public')->assertMissing($teamFormPath);
+        // A form on its own is soft deleted, so its banner stays until it is purged.
+        Storage::disk('public')->assertExists($formPath);
+        $this->purgeDeletedRecords();
+        Storage::disk('public')->assertMissing($formPath);
     }
 
     public function test_builder_tells_menu_managers_whether_the_form_is_already_in_each_menu(): void

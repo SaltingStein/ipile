@@ -147,8 +147,11 @@ class CampaignPageControllerTest extends TestCase
         $this->actingAs($manager)->post(route('admin.campaigns.duplicate', $page));
         $copy = CampaignPage::query()->latest('id')->first();
         $this->actingAs($manager)->delete(route('admin.campaigns.destroy', $page))->assertRedirect(route('admin.campaigns.index'));
+        $this->purgeDeletedRecords();
         Storage::disk('public')->assertExists($banner);
         $this->actingAs($manager)->delete(route('admin.campaigns.destroy', $copy));
+        Storage::disk('public')->assertExists($banner); // the copy is only soft deleted
+        $this->purgeDeletedRecords();
         Storage::disk('public')->assertMissing($banner);
     }
 

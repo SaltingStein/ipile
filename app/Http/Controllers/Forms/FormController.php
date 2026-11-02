@@ -121,8 +121,8 @@ class FormController extends Controller
         abort_if($form->isRegistrationForm(), 403, __('The sign-up form cannot be deleted.'));
         Gate::authorize('delete', $form);
 
+        // Soft delete: the banner file is removed when the form is pruned, so a restore keeps it.
         $form->delete();
-        $media->deleteFile($form->media_path);
 
         return redirect()->to($form->isSiteForm() ? route('admin.forms.index') : route('forms.index'))
             ->with('status', __('Form deleted.'));

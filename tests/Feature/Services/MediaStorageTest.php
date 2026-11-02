@@ -103,7 +103,9 @@ class MediaStorageTest extends TestCase
 
         $post = BlogPost::factory()->create(['body' => "![Hall]({$url})"]);
         $this->actingAs($manager)->delete(route('admin.blog.destroy', $post));
+        Storage::disk(MediaStorage::BUCKET_DISK)->assertExists($path);
 
+        $this->purgeDeletedRecords();
         Storage::disk(MediaStorage::BUCKET_DISK)->assertMissing($path);
     }
 

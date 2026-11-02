@@ -197,6 +197,12 @@ class FormBuilderTest extends TestCase
         $this->actingAs($team->owner)->delete(route('forms.destroy', $form))
             ->assertRedirect(route('forms.index'));
 
+        // Soft deleted with its responses kept, so the form can be restored intact.
+        $this->assertSoftDeleted($form);
+        $this->assertDatabaseCount('form_submissions', 2);
+
+        // Purging removes the form for good, and the database removes its responses with it.
+        $this->purgeDeletedRecords();
         $this->assertModelMissing($form);
         $this->assertDatabaseCount('form_submissions', 0);
     }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SoftDeletesWithRetention;
+use App\Services\Campaigns\CampaignAssets;
 use App\Services\Campaigns\CampaignStatus;
 use App\Services\Campaigns\CampaignTemplate;
 use Database\Factories\CampaignPageFactory;
@@ -19,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CampaignPage extends Model
 {
     /** @use HasFactory<CampaignPageFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletesWithRetention;
 
     protected $fillable = [
         'title',
@@ -79,5 +81,13 @@ class CampaignPage extends Model
     public function conversionRate(): ?float
     {
         return $this->views === 0 ? null : round($this->conversions / $this->views * 100, 1);
+    }
+
+    /**
+     * Remove the page's files once the soft-deleted page is purged for good.
+     */
+    protected function pruning(): void
+    {
+        app(CampaignAssets::class)->deleteFor($this);
     }
 }
