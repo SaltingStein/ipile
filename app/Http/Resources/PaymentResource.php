@@ -22,7 +22,10 @@ class PaymentResource extends JsonResource
     {
         return [
             'reference' => $this->reference,
+            // Exact decimal string ("5000.00"), unchanged for existing clients.
             'amount' => $this->amount,
+            // The same amount in integer minor units (kobo, cents): the value to compute with.
+            'amount_minor' => $this->amount_minor,
             'currency' => $this->currency,
             'provider' => $this->provider,
             'status' => $this->status,

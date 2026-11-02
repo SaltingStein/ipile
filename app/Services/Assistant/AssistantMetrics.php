@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\Blog\BlogPostStatus;
 use App\Services\Payments\PaymentWebhook;
+use App\Support\Money;
 use Closure;
 use InvalidArgumentException;
 
@@ -140,10 +141,10 @@ class AssistantMetrics
             'payments.summary' => Payment::query()
                 ->where('status', PaymentWebhook::STATUS_SUCCESSFUL)
                 ->where('created_at', '>=', now()->subDays(30))
-                ->selectRaw('currency, count(*) as payments, sum(amount) as total')
+                ->selectRaw('currency, count(*) as payments, sum(amount_minor) as total_minor')
                 ->groupBy('currency')
                 ->get()
-                ->map(fn (Payment $row) => ['currency' => $row->currency, 'payments' => (int) $row->getAttribute('payments'), 'total' => (string) $row->getAttribute('total')])
+                ->map(fn (Payment $row) => ['currency' => $row->currency, 'payments' => (int) $row->getAttribute('payments'), 'total' => Money::fromMinor((int) $row->getAttribute('total_minor'))])
                 ->all(),
             default => isset(app(AssistantExtensions::class)->metrics()[$key])
                 ? (app(AssistantExtensions::class)->metrics()[$key]['values'])()

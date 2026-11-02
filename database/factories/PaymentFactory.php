@@ -21,7 +21,7 @@ class PaymentFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'amount' => fake()->randomFloat(2, 100, 50000),
+            'amount_minor' => fake()->numberBetween(10_000, 5_000_000),
             'currency' => 'NGN',
             'reference' => 'pay-'.Str::lower((string) Str::ulid()),
             'provider' => 'squad',
