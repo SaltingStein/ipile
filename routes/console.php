@@ -136,6 +136,8 @@ Schedule::command('api-tokens:prune-idle')->dailyAt('02:05');
 Schedule::command('security:prune')->dailyAt('02:15');
 Schedule::command('security:train')->dailyAt('02:30')->withoutOverlapping();
 Schedule::command('blog:prune-images')->dailyAt('02:45');
+// Permanently removes soft-deleted records past config('retention.deleted_records_days'), with their files.
+Schedule::command('model:prune')->dailyAt('02:55');
 Schedule::command('campaigns:prune-images')->dailyAt('02:50');
 
 // Does nothing while translation is off or has no AI model; the daily limit in Admin → Languages caps the cost.

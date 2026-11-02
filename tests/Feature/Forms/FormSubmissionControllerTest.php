@@ -59,7 +59,7 @@ class FormSubmissionControllerTest extends TestCase
         $this->actingAs($form->team->owner)->delete(route('forms.submissions.destroy', [$form, $submission]))
             ->assertSessionHas('status', 'Response deleted.');
 
-        $this->assertModelMissing($submission);
+        $this->assertSoftDeleted($submission);
     }
 
     public function test_response_from_another_form_cannot_be_deleted_through_this_one(): void

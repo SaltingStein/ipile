@@ -4,8 +4,10 @@ namespace App\Services\Payments;
 
 use App\Models\Payment;
 use App\Services\Notifications\Notify;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 /**
  * Applies a verified provider webhook to the payments ledger.
@@ -59,22 +61,25 @@ class PaymentWebhookProcessor
         Notify::event($status === PaymentWebhook::STATUS_SUCCESSFUL ? 'payment.succeeded' : 'payment.failed')
             ->to($payment->user)
             ->with([
-                'amount' => strtoupper($payment->currency).' '.number_format((float) $payment->amount, 2),
+                'amount' => strtoupper($payment->currency).' '.Money::format($payment->amount_minor),
                 'reference' => $payment->reference,
             ])
             ->send();
     }
 
     /**
-     * Compare in minor units (kobo/cents) so "5000", "5000.0" and "5000.00" are equal.
+     * Compare exact integer minor units (kobo/cents), so "5000", "5000.0" and "5000.00" are equal
+     * and no float rounding can make two different amounts look the same.
      */
     private function matchesLedger(Payment $payment, PaymentWebhook $webhook): bool
     {
-        if (! is_numeric($webhook->amount)) {
+        try {
+            $received = Money::toMinor($webhook->amount);
+        } catch (InvalidArgumentException) {
             return false;
         }
 
-        return (int) round((float) $payment->amount * 100) === (int) round((float) $webhook->amount * 100)
+        return $payment->amount_minor === $received
             && strtoupper($payment->currency) === strtoupper($webhook->currency);
     }
 }

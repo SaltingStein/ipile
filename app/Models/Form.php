@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SoftDeletesWithRetention;
 use App\Services\Forms\FormFieldType;
 use App\Services\Forms\FormLayout;
+use App\Services\Forms\FormMedia;
 use App\Services\Forms\FormStatus;
 use App\Services\Forms\RegistrationForm;
 use Database\Factories\FormFactory;
@@ -22,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Form extends Model
 {
     /** @use HasFactory<FormFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletesWithRetention;
 
     protected $fillable = [
         'title',
@@ -151,5 +153,13 @@ class Form extends Model
     public function publicUrl(): ?string
     {
         return $this->slug === null ? null : route('forms.public.show', $this->slug);
+    }
+
+    /**
+     * Remove the banner file once the soft-deleted form is purged for good.
+     */
+    protected function pruning(): void
+    {
+        app(FormMedia::class)->deleteFile($this->media_path);
     }
 }

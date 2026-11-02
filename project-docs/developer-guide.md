@@ -226,6 +226,7 @@ Claude Code, Codex, Cursor, Copilot, Gemini and similar tools read project instr
 - Pick your agents: `php artisan boost:install`.
 - After pulling an Ìpìlẹ̀ update: `php artisan boost:update` to refresh the instructions.
 - Ìpìlẹ̀'s instructions live in `.ai/guidelines/ipile.md` and `.ai/skills/ipile-*`. Add your product's own conventions as new files there (for example `.ai/guidelines/my-product.md`) and run `php artisan boost:update`; they are merged in and survive Ìpìlẹ̀ updates.
+- The governance rules agents follow (the SDGP hierarchy, ADR triggers, PR and changelog rules) are in `.ai/guidelines/sdgp.md`. Copilot and Cursor are pointed at `AGENTS.md` by `.github/copilot-instructions.md` and `.cursorrules`.
 
 ### …teach the AI assistant about my data
 
@@ -239,6 +240,29 @@ Add these from a service provider instead of editing Ìpìlẹ̀ files: `Assista
 If the site uses a third-party assistant widget with **Data access** on, the widget's service reads through `/mcp/widgets` with the same figures and data block. Your own tools reach it only if you also call `WidgetDataTools::register()`; see [the widget data connection guide](widget-data-connection.md).
 
 Staff can also use two extra modes of the same assistant, **Site guidance** and **Analytics**, once an admin switches them on (Admin → Site assistant → Staff modes) and their role has `use_assistant_guidance` or `use_assistant_analytics`. Each message is routed automatically. For a staff-only insight, register the tool for that mode: `AssistantTools::register(PayoutTrends::class, [AssistantIntent::Analytics])`. To let the guidance mode answer from your own runbook, call `AssistantKnowledge::add('docs/runbook.md')`.
+
+---
+
+## How work is planned and reviewed
+
+Ìpìlẹ̀ follows the company Software Development Governance Policy (SDGP). Work moves in this order: BRD → PRD → solution document → feature spec → ADR (when the change needs one) → code → tests → deployment.
+
+| Document | Where |
+|---|---|
+| BRD and PRD | `dev-project-docs/` |
+| Solution / architecture document | `docs/solution-doc-architecture.md` |
+| Feature specs | `docs/specs/` (copy `_template.md`) |
+| Architecture decisions (ADRs) | `docs/adr/` (copy `_template.md`) |
+| Deviations from the process | `docs/deviations/` (copy `_template.md`) |
+
+Write an ADR before building anything that moves money, touches personal data, changes a security boundary, adds an external service, or changes how the app is deployed. Pull requests use `.github/pull_request_template.md`; fill in Testing, Risk and How to revert. Record what changed in `CHANGELOG.md`.
+
+**Starting a new project from Ìpìlẹ̀:**
+
+1. Create the repository with GitHub's **Use this template** button, in an organisation where the Sentinel code reviewer covers all repositories.
+2. Rename `.ipile.md` to `.<your-repo-name>.md` and replace its contents with your project's own review rules.
+3. Replace the placeholders in `dev-project-docs/` and `docs/solution-doc-architecture.md` with your BRD, PRD and architecture before writing feature specs.
+4. Keep `docs/specs/`, `docs/adr/` and `docs/deviations/` from Ìpìlẹ̀: they record why the boilerplate works the way it does.
 
 ---
 
@@ -271,6 +295,10 @@ Everything else is a suggestion. These protect your users:
 2. **Secrets are stored encrypted and never sent to the browser.** Use Integrations for third-party credentials.
 3. **Operator settings live in the database and the admin area, not in `.env` or code**, so changing them never needs a deploy.
 4. **New behaviour comes with a test.**
+5. **Money is whole minor units (kobo, cents), never floats.** Store amounts in an `*_minor` integer column and convert with `App\Support\Money`.
+6. **Deleting is a soft delete.** Use `SoftDeletesWithRetention` so records can be restored until `model:prune` purges them after `retention.deleted_records_days` (30 by default). Payments are kept.
+7. **Changes an admin must account for are audited.** Add the `Auditable` trait to the model and list its personal fields in `$auditRedacted`; see who did what in Admin → Audit log.
+8. **People can download and delete their data.** If you store new personal data about a user, add it to `PersonalDataExport` and make `AccountDeletion` remove or anonymise it.
 
 ---
 

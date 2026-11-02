@@ -127,6 +127,39 @@ class WebhookControllerTest extends TestCase
         $this->assertSame('pending', $payment->fresh()->status);
     }
 
+    public function test_an_amount_one_kobo_off_is_rejected(): void
+    {
+        $this->useSignedTestGateway();
+        $payment = Payment::factory()->create(['provider' => 'squad', 'amount' => '19.99']);
+
+        $this->sendSignedWebhook($payment->reference, 'successful', '19.98')->assertUnprocessable();
+
+        $this->assertSame('pending', $payment->fresh()->status);
+    }
+
+    public function test_a_fraction_of_a_kobo_is_not_rounded_into_a_match(): void
+    {
+        // Float rounding used to accept "5000.004" as 5000.00. Money is now compared exactly.
+        $this->useSignedTestGateway();
+        $payment = Payment::factory()->create(['provider' => 'squad', 'amount' => 5000]);
+
+        $this->sendSignedWebhook($payment->reference, 'successful', '5000.004')->assertUnprocessable();
+
+        $this->assertSame('pending', $payment->fresh()->status);
+    }
+
+    public function test_amounts_that_multiply_badly_as_floats_still_match_exactly(): void
+    {
+        // 19.99 * 100 is 1998.9999999999998 in floating point.
+        $this->useSignedTestGateway();
+        $payment = Payment::factory()->create(['provider' => 'squad', 'amount' => '19.99']);
+
+        $this->sendSignedWebhook($payment->reference, 'successful', '19.99')->assertOk();
+
+        $this->assertSame('successful', $payment->fresh()->status);
+        $this->assertSame(1999, $payment->fresh()->amount_minor);
+    }
+
     public function test_currency_that_differs_from_the_ledger_is_rejected(): void
     {
         $this->useSignedTestGateway();

@@ -76,6 +76,7 @@ class PaymentControllerTest extends TestCase
 
         $response->assertCreated();
         $response->assertJsonPath('data.amount', '5000.00');
+        $response->assertJsonPath('data.amount_minor', 500000);
         $response->assertJsonPath('data.status', 'pending');
         $response->assertJsonPath('data.checkout_url', 'https://checkout.paystack.com/abc123');
         $response->assertJsonMissingPath('data.gateway_response');

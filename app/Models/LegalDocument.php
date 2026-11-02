@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Services\BrandingSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -9,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class LegalDocument extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected $casts = ['published_at' => 'datetime', 'version' => 'integer', 'revision' => 'integer'];

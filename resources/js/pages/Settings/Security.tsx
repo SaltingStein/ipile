@@ -64,6 +64,7 @@ export default function Security({ hasPassword, twoFactor, connectedAccounts, se
             <BrowserSessionsPanel hasPassword={hasPassword} sessions={sessions} />
             {trustedDevices.days > 0 && <TrustedDevicesPanel count={trustedDevices.count} />}
             {(activity.enabled || activity.items.length > 0) && <ActivityPanel activity={activity} />}
+            <YourDataPanel />
         </AppLayout>
     );
 }
@@ -335,6 +336,43 @@ function ActivityPanel({ activity }: { activity: SecurityProps['activity'] }) {
                     })}
                 </ul>
             )}
+        </Panel>
+    );
+}
+
+function YourDataPanel() {
+    const { errors } = usePage<SharedPageProps>().props;
+    const { data, setData, delete: destroy, processing, errors: formErrors } = useForm({ confirm: '' });
+
+    function submit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        destroy('/settings/account', keepScroll);
+    }
+
+    return (
+        <Panel title="Your data" description="Download a copy of everything we hold about you, or delete your account.">
+            <a href="/settings/account/export" className="self-start rounded-md bg-slate-800 px-4 py-2 text-sm hover:bg-slate-700">
+                Download my data
+            </a>
+
+            <form onSubmit={submit} className="flex max-w-md flex-col gap-3 border-t border-slate-800 pt-5">
+                <p className="text-sm text-slate-400">
+                    Deleting your account removes your name, email, phone number and sign-in methods straight away and signs you out
+                    everywhere. Payment records are kept as the law requires, with your details removed. This cannot be undone.
+                </p>
+                <StatusMessage tone="error" message={errors.account} />
+                <TextField
+                    label="Type DELETE to confirm"
+                    name="confirm"
+                    required
+                    value={data.confirm}
+                    onChange={(value) => setData('confirm', value)}
+                    error={formErrors.confirm}
+                />
+                <Button type="submit" variant="danger" className="self-start" disabled={processing || data.confirm !== 'DELETE'}>
+                    Delete my account
+                </Button>
+            </form>
         </Panel>
     );
 }

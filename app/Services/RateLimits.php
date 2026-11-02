@@ -57,6 +57,9 @@ final class RateLimits
         'provider-tests' => ['per_minute' => 10, 'by' => 'user'],
         'security-analysis' => ['per_minute' => 10, 'by' => 'user'],
         'webhooks' => ['per_minute' => 120, 'by' => 'ip'],
+        // Personal data downloads and account deletions (NDPR / GDPR self-service).
+        'account-export' => ['per_minute' => 5, 'by' => 'user'],
+        'account-deletion' => ['per_minute' => 5, 'by' => 'user'],
     ];
 
     public static function register(): void

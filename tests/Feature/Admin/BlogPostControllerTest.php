@@ -132,6 +132,11 @@ class BlogPostControllerTest extends TestCase
 
         $this->actingAs($manager)->delete(route('admin.blog.destroy', $post))->assertRedirect(route('admin.blog.index'));
 
+        // Soft deleted: recoverable, so the cover stays until the post is purged.
+        $this->assertSoftDeleted($post);
+        Storage::disk('public')->assertExists($post->cover_image_path);
+
+        $this->purgeDeletedRecords();
         $this->assertModelMissing($post);
         Storage::disk('public')->assertMissing($post->cover_image_path);
     }
@@ -170,7 +175,9 @@ class BlogPostControllerTest extends TestCase
         BlogPost::factory()->create(['body' => $this->bodyWith($shared)]);
 
         $this->actingAs($manager)->delete(route('admin.blog.destroy', $post))->assertRedirect(route('admin.blog.index'));
+        Storage::disk('public')->assertExists($own);
 
+        $this->purgeDeletedRecords();
         Storage::disk('public')->assertMissing($own);
         Storage::disk('public')->assertExists($shared);
     }

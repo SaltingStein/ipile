@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SoftDeletesWithRetention;
 use Database\Factories\FormSubmissionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FormSubmission extends Model
 {
     /** @use HasFactory<FormSubmissionFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletesWithRetention;
 
     protected $fillable = [
         'data',

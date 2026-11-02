@@ -97,10 +97,11 @@ class BlogAssets
 
     /**
      * Uploaded file names are random, so a post that contains the name links to that file.
+     * Soft-deleted posts still count until they are pruned, so restoring one keeps its pictures.
      */
     private function isUsedByAnotherPost(string $reference, ?BlogPost $except = null): bool
     {
-        return BlogPost::query()
+        return BlogPost::withTrashed()
             ->when($except !== null, fn ($query) => $query->whereKeyNot($except->getKey()))
             ->where('body', 'like', '%'.basename($reference).'%')
             ->exists();

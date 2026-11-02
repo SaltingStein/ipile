@@ -9,7 +9,9 @@ use App\Services\Payments\BasePaymentGateway;
 use App\Services\Payments\PaymentGatewayException;
 use App\Services\Payments\PaymentWebhook;
 use App\Services\Payments\PaymentWebhookProcessor;
+use App\Support\Money;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 /**
  * Flutterwave Standard: the payer is sent to Flutterwave's hosted page (`checkout_url`), and the payment
@@ -147,7 +149,15 @@ class FlutterwaveGateway extends BasePaymentGateway
      */
     private function decimal(mixed $amount): string
     {
-        return is_numeric($amount) ? number_format((float) $amount, 2, '.', '') : '';
+        if (! is_numeric($amount)) {
+            return '';
+        }
+
+        try {
+            return Money::fromMinor(Money::toMinor(is_float($amount) ? $amount : (string) $amount));
+        } catch (InvalidArgumentException) {
+            return '';
+        }
     }
 
     /**

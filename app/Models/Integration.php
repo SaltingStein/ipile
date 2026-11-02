@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Services\Integrations\IntegrationManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
  */
 class Integration extends Model
 {
+    use Auditable;
+
     /**
      * Cache of every row's raw attributes, so `config` stays encrypted in the cache store.
      * Cleared by model events: change rows through the model, never with a bulk `query()->update()`.

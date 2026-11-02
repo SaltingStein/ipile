@@ -209,9 +209,11 @@ class FormDuplicationTest extends TestCase
         $this->assertSame('banner-content', Storage::disk('public')->get($copy->media_path));
 
         $this->delete(route('forms.destroy', $source))->assertRedirect();
+        $this->purgeDeletedRecords();
         Storage::disk('public')->assertMissing($path);
         Storage::disk('public')->assertExists($copy->media_path);
         $this->delete(route('forms.destroy', $copy))->assertRedirect();
+        $this->purgeDeletedRecords();
         Storage::disk('public')->assertMissing($copy->media_path);
     }
 

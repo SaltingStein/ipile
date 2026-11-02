@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SoftDeletesWithRetention;
+use App\Services\Blog\BlogAssets;
 use App\Services\Blog\BlogPostStatus;
 use App\Services\Media\MediaStorage;
 use App\Services\Media\VideoEmbed;
@@ -20,7 +22,7 @@ use Illuminate\Support\Str;
 class BlogPost extends Model
 {
     /** @use HasFactory<BlogPostFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletesWithRetention;
 
     protected $fillable = [
         'title',
@@ -113,5 +115,13 @@ class BlogPost extends Model
     public function coverUrl(): ?string
     {
         return app(MediaStorage::class)->url($this->cover_image_path);
+    }
+
+    /**
+     * Remove the post's files once the soft-deleted post is purged for good.
+     */
+    protected function pruning(): void
+    {
+        app(BlogAssets::class)->deleteFor($this);
     }
 }

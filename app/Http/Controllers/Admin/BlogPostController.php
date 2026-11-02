@@ -89,8 +89,8 @@ class BlogPostController extends Controller
      */
     public function destroy(BlogPost $post, BlogAssets $assets): RedirectResponse
     {
+        // Soft delete: the post's files are removed when it is pruned, so a restore keeps them.
         $post->delete();
-        $assets->deleteFor($post);
 
         return redirect()->route('admin.blog.index')->with('status', __('Post deleted.'));
     }

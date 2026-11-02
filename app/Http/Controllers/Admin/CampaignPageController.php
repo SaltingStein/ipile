@@ -155,8 +155,8 @@ class CampaignPageController extends Controller
 
     public function destroy(CampaignPage $campaign, CampaignAssets $assets, CampaignSettings $settings): RedirectResponse
     {
+        // Soft delete: the page's files are removed when it is pruned, so a restore keeps them.
         $campaign->delete();
-        $assets->deleteFor($campaign);
 
         if ($settings->homePageId() === $campaign->id) {
             $settings->setHomePage(null);

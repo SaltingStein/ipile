@@ -4,6 +4,7 @@ namespace App\Services\Payments;
 
 use App\Interfaces\PaymentGatewayInterface;
 use App\Models\Payment;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -74,7 +75,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
      */
     protected function toMinorUnits(string|int|float $amount): int
     {
-        return (int) round(((float) $amount) * 100);
+        return Money::toMinor($amount);
     }
 
     /**
@@ -82,7 +83,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
      */
     protected function fromMinorUnits(int $amount): string
     {
-        return sprintf('%d.%02d', intdiv($amount, 100), $amount % 100);
+        return Money::fromMinor($amount);
     }
 
     /**

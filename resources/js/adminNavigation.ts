@@ -65,6 +65,7 @@ const adminGroupDefinitions: AdminGroupDefinition[] = [
             { title: 'Threat monitoring', href: '/admin/security', description: 'Aegis incidents and recent high-risk events.', permissions: ['view_security', 'manage_security'] },
             { title: 'Incidents', href: '/admin/security/incidents', description: 'Every incident, including site assistant violations: review, restore suspended accounts and resolve.', permissions: ['view_security', 'manage_security'] },
             { title: 'Monitoring settings', href: '/admin/security/settings', description: 'Aegis mode, response thresholds, scope, data retention and the AI analyst.', permissions: ['manage_security'] },
+            { title: 'Audit log', href: '/admin/audit-log', description: 'Who changed accounts, roles, settings, integrations, payments and legal pages, and when.', permissions: ['view_audit_log'] },
             { title: 'Monitoring guide', href: '/admin/security/guide', description: 'How Aegis works, the server checklist and setup steps.', permissions: ['view_security', 'manage_security'] },
         ],
     },

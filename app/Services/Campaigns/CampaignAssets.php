@@ -71,12 +71,13 @@ class CampaignAssets
 
     /**
      * Uploaded file names are random, so a page whose content contains the name uses that file.
+     * Soft-deleted pages still count until they are pruned, so restoring one keeps its pictures.
      */
     private function isUsed(string $reference, ?CampaignPage $except = null): bool
     {
         $name = basename($reference);
 
-        return CampaignPage::query()
+        return CampaignPage::withTrashed()
             ->when($except !== null, fn ($query) => $query->whereKeyNot($except->getKey()))
             ->where(fn ($query) => $query->where('hero', 'like', "%{$name}%")->orWhere('sections', 'like', "%{$name}%"))
             ->exists();
