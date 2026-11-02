@@ -40,6 +40,8 @@ Route::prefix('v1/auth')->name('api.v1.auth.')->group(function () {
     Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function () {
         Route::get('/user', [AccountController::class, 'show'])->name('user');
         Route::post('/logout', [AccountController::class, 'logout'])->name('logout');
+        Route::get('/user/export', [AccountController::class, 'export'])->middleware('throttle:account-export')->name('user.export');
+        Route::delete('/user', [AccountController::class, 'destroy'])->middleware('throttle:account-deletion')->name('user.destroy');
         Route::post('/email/verification-notification', [AccountController::class, 'sendVerificationEmail'])
             ->middleware('throttle:verification')
             ->name('verification.send');

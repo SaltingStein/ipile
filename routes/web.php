@@ -47,6 +47,7 @@ use App\Http\Controllers\HelpCenterController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\Settings\AccountController as SettingsAccountController;
 use App\Http\Controllers\Settings\ApiTokenController;
 use App\Http\Controllers\Settings\BrowserSessionController;
 use App\Http\Controllers\Settings\ConnectedAccountController;
@@ -180,6 +181,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::delete('/browser-sessions', [BrowserSessionController::class, 'destroy'])->middleware('security.track:account.sessions_revoked')->name('browser-sessions.destroy');
             Route::delete('/trusted-devices', [TrustedDeviceController::class, 'destroy'])->name('trusted-devices.destroy');
             Route::delete('/connected-accounts/{provider}', [ConnectedAccountController::class, 'destroy'])->name('connected-accounts.destroy');
+
+            Route::get('/account/export', [SettingsAccountController::class, 'export'])->middleware('throttle:account-export')->name('account.export');
+            Route::delete('/account', [SettingsAccountController::class, 'destroy'])->middleware('throttle:account-deletion')->name('account.destroy');
         });
     });
 
