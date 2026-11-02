@@ -16,6 +16,11 @@ This app is built on **Ìpìlẹ̀**, a reusable Laravel + Inertia React starter
 2. Secrets (API keys, passwords) are stored encrypted and never sent to the browser. Third-party credentials go in Integrations (`IntegrationCatalog`).
 3. Settings an operator might change live in the database and the admin area (the cached `Setting` model), not in `.env` or code. This includes AI providers: when using `laravel/ai`, get the provider with `app(AiModels::class)->provider('openai')` (configured in Admin → Integrations → AI models) instead of the `.env` keys the generic `ai-sdk-development` skill describes; everything else in that skill applies.
 4. New behaviour comes with a feature test.
+5. Money is integer minor units (kobo, cents). Store it in an `*_minor` integer column and convert with `App\Support\Money` (`toMinor`, `fromMinor`, `format`); never `(float)`, `round()` or `* 100` on an amount.
+6. Records people can delete use `SoftDeletesWithRetention` (soft delete, purged by `model:prune` after `retention.deleted_records_days`); file clean-up goes in the model's `pruning()` method, not the controller. Financial records such as `Payment` use plain `SoftDeletes` and are never purged.
+7. Models an admin would need to account for use the `Auditable` trait, with personal data listed in `$auditRedacted`. Actions that are not a model save (role grants, exports) call `Audit::record()`. Never write secrets or personal data into the audit log.
+8. New personal data about a user is added to `PersonalDataExport` and is removed or anonymised by `AccountDeletion`, with a test for each.
+9. Rate limits use a named limiter from `App\Services\RateLimits` (`throttle:name`), never `throttle:N,M`.
 
 ## Where product code goes
 
