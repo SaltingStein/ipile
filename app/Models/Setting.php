@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Cache;
  */
 class Setting extends Model
 {
+    use Auditable {
+        auditableValues as protected baseAuditableValues;
+    }
+
     protected $fillable = [
         'key',
         'value',
@@ -23,6 +28,27 @@ class Setting extends Model
     {
         static::saved(fn (Setting $setting) => Cache::forget(static::cacheKey($setting->key)));
         static::deleted(fn (Setting $setting) => Cache::forget(static::cacheKey($setting->key)));
+    }
+
+    /**
+     * Always say which setting changed, and never log the value of one that holds a credential.
+     *
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
+     */
+    protected function auditableValues(array $keys, bool $original = false): array
+    {
+        $values = $this->baseAuditableValues($keys, $original);
+
+        if ($values === []) {
+            return [];
+        }
+
+        if (array_key_exists('value', $values) && preg_match('/(hash|secret|token|password|credential|_key$)/i', (string) $this->key)) {
+            $values['value'] = self::AUDIT_REDACTED;
+        }
+
+        return ['key' => $this->key, ...$values];
     }
 
     /**

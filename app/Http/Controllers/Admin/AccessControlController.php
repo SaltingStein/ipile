@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Audit\Audit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -62,11 +63,15 @@ class AccessControlController extends Controller
         if ($user !== null && $roleName !== '') {
             $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
 
+            $before = $user->getRoleNames()->values()->all();
+
             if ($request->boolean('revoke_role')) {
                 $user->removeRole($role);
             } else {
                 $user->assignRole($role);
             }
+
+            Audit::record('user.roles_changed', $user, ['roles' => $before], ['roles' => $user->fresh()->getRoleNames()->values()->all()]);
         }
 
         if ($roleName !== '') {
@@ -83,6 +88,12 @@ class AccessControlController extends Controller
                 } else {
                     $role->givePermissionTo($permission);
                 }
+
+                Audit::record(
+                    $request->boolean('revoke_permission') ? 'role.permission_revoked' : 'role.permission_granted',
+                    $role,
+                    after: ['role' => $role->name, 'permission' => $permission->name],
+                );
             }
         }
 

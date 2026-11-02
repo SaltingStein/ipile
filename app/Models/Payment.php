@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Support\Money;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -20,7 +21,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
-    use HasFactory, SoftDeletes;
+    use Auditable, HasFactory, SoftDeletes;
+
+    /** @var list<string> Provider payloads are large and already kept on the payment itself. */
+    protected array $auditIgnored = ['gateway_response'];
 
     protected $fillable = [
         'user_id',

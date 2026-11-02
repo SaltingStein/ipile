@@ -4,6 +4,7 @@ use App\Http\Controllers\AboutBoilerplateController;
 use App\Http\Controllers\Admin\AccessControlController;
 use App\Http\Controllers\Admin\ApiDocsSettingsController;
 use App\Http\Controllers\Admin\AssistantSettingsController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthenticationSettingsController;
 use App\Http\Controllers\Admin\BlogCategoryController;
 use App\Http\Controllers\Admin\BlogPostController;
@@ -187,7 +188,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::middleware('two-factor.configured')->group(function () {
         // Admin overview: open to anyone who can reach at least one admin page (see resources/js/adminNavigation.ts).
         Route::get('/admin', fn () => Inertia::render('Admin/Overview'))
-            ->middleware('permission:manage_settings|edit_legal_content|publish_legal_content|manage_access|manage_integrations|view_security|manage_security|manage_forms|manage_blog|manage_campaigns|manage_translations')
+            ->middleware('permission:manage_settings|edit_legal_content|publish_legal_content|manage_access|manage_integrations|view_security|manage_security|manage_forms|manage_blog|manage_campaigns|manage_translations|view_audit_log')
             ->name('admin.index');
         Route::permanentRedirect('/admin/site-settings', '/admin');
 
@@ -203,6 +204,10 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::get('/admin/consent', [ConsentSettingsController::class, 'edit'])->name('admin.consent.edit');
             Route::put('/admin/consent', [ConsentSettingsController::class, 'update'])->name('admin.consent.update');
         });
+
+        Route::get('/admin/audit-log', [AuditLogController::class, 'index'])
+            ->middleware('permission:view_audit_log')
+            ->name('admin.audit-log.index');
 
         Route::middleware('permission:manage_access')->group(function () {
             Route::get('/admin/access', [AccessControlController::class, 'index'])->name('admin.access');

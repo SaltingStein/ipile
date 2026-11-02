@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\SoftDeletesWithRetention;
 use App\Services\Auth\TwoFactorAuthenticator;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -24,7 +25,13 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletesWithRetention;
+    use Auditable, HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletesWithRetention;
+
+    /** @var list<string> Personal data: changes are logged, values are not (see Auditable). */
+    protected array $auditRedacted = ['name', 'nickname', 'email', 'phone_number', 'avatar_url', 'email_verification_token'];
+
+    /** @var list<string> */
+    protected array $auditIgnored = ['last_login_at', 'two_factor_last_used_window'];
 
     protected $fillable = [
         'name',
