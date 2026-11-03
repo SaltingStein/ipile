@@ -1,50 +1,116 @@
-# Ìpìlẹ̀
+# TraderPadi
 
-A Laravel + Inertia React starter kit for building products fast. Out of the box you get:
+**Digital business tools for informal traders across Africa.**
 
-- **Accounts:** sign-in, registration, email verification, two-factor, trusted devices, sessions, social sign-in, API tokens
-- **Teams:** invitations, roles, switching
-- **Admin area:** roles and permissions, branding, themes, sign-in rules, notifications, legal pages and consent notices
-- **Integrations, configured in the dashboard:** Nigerian payment gateways (Paystack, Squad, Flutterwave, OPay), SMS over SMPP with [TelKo](https://telko-ms.com) (or any SMPP v3.4 provider), ZeptoMail, Google Analytics
-- **Security monitoring (Aegis):** risk scoring, incidents and automatic responses
-- **A versioned API** (`/api/v1`) with generated docs, plus an in-app **Help Center**
+TraderPadi helps market traders and shop owners record sales, manage stock, track customer credit and build a verifiable business history, without needing constant internet access or formal paperwork. It starts from what happens in the trade (cash sales, credit given by word of mouth, stock counted by eye) rather than from payments, so it captures business activity that never touches a bank or payment rail.
 
-Operators change settings in the admin area, never in `.env` or code.
+This repository is the rebuild of the TraderPadi platform on the [Ìpìlẹ̀](#built-on-ìpìlẹ̀) starter kit. It replaces the original Laravel 12 + Blade backend at `C:\wamp64\www\traderpadi\backend`, which is being ported over one module at a time.
 
-## Get started
+## The problem
+
+Most African commerce happens in informal markets, where traders often have:
+
+- No digital record of their sales or business history
+- No reliable way to track who owes them (the "owo mi" problem)
+- Stock kept track of from memory
+- No proof of income when they want a loan or other financial services
+
+## Who uses TraderPadi
+
+| Portal | Users | Purpose |
+|--------|-------|---------|
+| **Vendor app** | Market traders, shop owners | Daily sales, inventory and customers, offline first (Flutter Android app, kept in a separate repo) |
+| **Admin portal** | TraderPadi staff | Platform management, vendor support, analytics |
+| **Advertiser portal** | Brands, suppliers | Targeted campaigns to traders |
+| **Partner API** | Financial institutions | Credit signals, loan disbursement |
+
+## Modules
+
+**Core (being ported from the original platform):**
+
+- Sales and point of sale, built to work offline and sync later
+- Inventory with low-stock alerts
+- Customer credit and repayment tracking
+- Daily cash reconciliation (opening cash + cash sales + repayments − expenses)
+- Receipts by SMS, WhatsApp or email
+- Business insights, profit and loss, and reports
+- Sync API for the vendor app
+
+**Platform (provided by Ìpìlẹ̀):**
+
+- Staff accounts with two-factor sign-in, roles and permissions
+- Admin area for branding, notifications, legal pages and settings
+- Payments (Paystack, Squad, Flutterwave, OPay), SMS over SMPP and ZeptoMail email, all configured in the dashboard
+- Security monitoring (Aegis), an activity log and an AI assistant
+- A versioned API (`/api/v1`) with generated docs at `/docs/api`
+- An in-app Help Center
+
+## Tech stack
+
+| Layer | Technology |
+|-------|------------|
+| Backend | Laravel 13, PHP 8.3 |
+| Frontend | Inertia.js v3 + React, TypeScript, Tailwind CSS |
+| Database | MySQL 8 in production; SQLite by default for local setup |
+| Queue and cache | Database driver |
+| Vendor app | Flutter (Android 8.0+) |
+| API auth | Laravel Sanctum |
+
+## Getting started
+
+Requirements: PHP 8.3+, Composer and Node.js. Local setup uses SQLite out of the box. To use MySQL, change the `DB_` settings in `.env`.
 
 ```bash
 composer setup   # install, create .env, migrate, create the super admin, build assets
 composer dev     # run the app, queue worker and Vite together
 ```
 
-Then make it yours:
+Settings that operators change, such as payment, SMS and email credentials, live in the admin area rather than `.env`.
+
+Production needs a cron job running `php artisan schedule:run` every minute and a queue worker.
+
+## Where TraderPadi code goes
+
+Keep TraderPadi's own code separate from Ìpìlẹ̀'s, so that starter-kit updates still merge cleanly:
+
+| What | Where |
+|------|-------|
+| Page routes | `routes/app.php` |
+| API routes for the vendor app and partners | `routes/app-api.php`, inside the `v1` group |
+| Sidebar links | `resources/js/appNavigation.ts` |
+| Admin menu entries | `resources/js/adminNavigation.ts` |
+| Pages | `resources/js/pages/` |
+| End-user help articles | `resources/help/` |
+
+To scaffold a new page with its route, controller, test, sidebar link and help draft:
 
 ```bash
-php artisan ipile:page Reports --nav   # a page with route, sidebar link, test and help draft
+php artisan ipile:page Inventory --nav
 ```
 
-## Documentation
+## Built on Ìpìlẹ̀
 
-- **[Developer guide](project-docs/developer-guide.md):** start here. Short "I want to…" recipes.
-- [Developer notes](project-docs/dev-notes.md): how notifications and themes work inside.
+[Ìpìlẹ̀](https://github.com/SaltingStein/ipile) is a Laravel + Inertia React starter kit. It is the `origin` git remote, so you can pull its updates with `git pull origin main`. This repo's own remote is `tradapadi`.
 
-## Working with AI coding agents
+- [Developer guide](project-docs/developer-guide.md): short "I want to…" recipes
+- [Developer notes](project-docs/dev-notes.md): how notifications and themes work inside
 
-Claude Code, Codex, Cursor, Copilot and Gemini pick up Ìpìlẹ̀'s conventions from `CLAUDE.md`, `AGENTS.md` and the Ìpìlẹ̀ skills, all generated by [Laravel Boost](https://laravel.com/docs/boost) from `.ai/`. Run `php artisan boost:install` to choose your agents, and `php artisan boost:update` after pulling an Ìpìlẹ̀ update.
+AI coding agents (Claude Code, Codex, Cursor, Copilot, Gemini) pick up the project's conventions from `CLAUDE.md`, `AGENTS.md` and the skills generated by [Laravel Boost](https://laravel.com/docs/boost). After pulling an Ìpìlẹ̀ update, run `php artisan boost:update`.
 
-## Requirements
+## Testing
 
-PHP 8.3+, Composer, Node.js and a database supported by Laravel.
+```bash
+php artisan test --compact
+vendor/bin/pint --dirty
+npm run typecheck
+```
 
-## Contributing
+## Security
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). To report a security vulnerability, follow [SECURITY.md](SECURITY.md) instead of opening an issue.
-
-## Acknowledgements
-
-Ìpìlẹ̀ was built with help from AI coding assistants: GitHub Copilot, Google Gemini and Anthropic Claude.
+Report security vulnerabilities to security@traderpadi.app rather than opening an issue.
 
 ## License
 
-Ìpìlẹ̀ is open-source software released under the [MIT License](LICENSE). It is built on [Laravel](https://laravel.com), also MIT-licensed.
+Copyright © 2024–2026 TraderPadi. All rights reserved. TraderPadi is in private development.
+
+Ìpìlẹ̀ and Laravel are open-source software released under the MIT License. Their copyright notice is kept in [LICENSE](LICENSE).

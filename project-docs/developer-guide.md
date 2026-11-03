@@ -134,6 +134,8 @@ $summary = agent('Summarise support tickets in two sentences.')
 
 For anything bigger, make an agent class (`php artisan make:agent TicketSummariser`) and return the provider from its `provider()` method. In tests, use the SDK's fakes (`TicketSummariser::fake(['…'])`) so no real model is called.
 
+If you prompt an agent without a provider, it uses the dashboard's default: the site assistant's AI model, or else the first switched-on AI model (`AiModels::defaultProvider()`). It never falls back to the SDK's `.env` keys; with no model switched on, it throws a clear error (faked agents still work in tests).
+
 ### …send an email or SMS
 
 For something users should be told about, use a notification event. Admins can then change the wording and channels in **Admin → Notifications**:
@@ -229,12 +231,24 @@ Claude Code, Codex, Cursor, Copilot, Gemini and similar tools read project instr
 
 ### …teach the AI assistant about my data
 
-The site assistant (Admin → Platform → Site assistant) can report business figures. Add yours to `AssistantMetrics::definitions()` and its `values()` method in `app/Services/Assistant/AssistantMetrics.php`.
+The site assistant (Admin → Platform → Site assistant) can report business figures and aggregate-only staff insights. For a discovered insight, run:
+
+```bash
+php artisan core:insight ProjectsPerTeam --table=projects --permission=view_projects --scope=team --team-ability=view
+```
+
+It creates `app/Ai/Insights/ProjectsPerTeam.php` and a feature test. The insight extends `AggregateInsight` and implements `Insight`; no registration call is needed. Declare its table, permission, scope and (for team scope) the matching `TeamPolicy` ability. Scope defaults to `platform` (the whole site); `team` needs a `team_id` column on the table. Keep groups few: combining `trend()` with several `groupBy()` columns multiplies the rows and can hit the 50-group cap. The registry applies the current team's `team_id` constraint, rechecks membership, policy and permission, and runs only bounded aggregates under `AssistantDataPolicy`. No unscoped query builder is handed to the insight. Use `groupBy()`, `trend()`, `sumColumn()` and fixed `filters()` to declare further aggregates; never group by personal details or identifiers. All queries cover the last 30 days and at most 50 groups, with an explicit truncation flag. `--public` is an explicit opt-in to omit an additional data permission; staff Analytics access and team policy still apply.
+
+Then select it under **Admin → Site assistant → Analytics insights**, enable the **Analytics** staff mode and grant its permissions. New insights start off. They are never offered to end-user support or the third-party widget.
+
+Built-in SMS and security insights read count-only projections in `assistant_insight_summaries`, not the blocked raw log tables. Run `php artisan migrate`, and run `php artisan schedule:run` every minute in production. `assistant:refresh-insights` refreshes selected summaries every five minutes; data older than 15 minutes is unavailable. The command is idempotent and does nothing before the assistant, Analytics mode and corresponding insights are enabled.
+
+For an existing-style business figure, use `AssistantMetrics::define()` from a service provider; do not edit the core definitions.
 - **Give each figure a permission.** A person only gets a figure if an admin ticks it and they have that permission.
 - **Return counts and totals only**, never names or contact details.
 - **Name your columns.** The assistant's data block refuses protected tables, protected columns and `select *` on tables with protected columns, so select the columns you need.
 
-Add these from a service provider instead of editing Ìpìlẹ̀ files: `AssistantMetrics::define()` for figures, `AssistantTools::register()` for tools, `AssistantDataPolicy::block()` for your sensitive tables and `AssistantGuard::rule()` for screening rules. See [Extending Aegis → the site assistant](aegis-extension-guide.md#7-extend-the-site-assistant).
+Add these from a service provider instead of editing Ìpìlẹ̀ files: `AssistantMetrics::define()` for figures, `AssistantTools::register()` for tools, `AssistantDataPolicy::block()` for your sensitive tables and `AssistantGuard::rule()` for screening rules. See [Extending Aegis → the site assistant](aegis-extension-guide.md#7-extend-the-site-assistant). Your tools' calls are logged automatically in Admin → Platform → Assistant activity (tool name, shortened and masked arguments, size of the result, never the data), together with each request's outcome and a snapshot of the person's roles and modes (`AiInteraction`, written by `AssistantChat`).
 
 If the site uses a third-party assistant widget with **Data access** on, the widget's service reads through `/mcp/widgets` with the same figures and data block. Your own tools reach it only if you also call `WidgetDataTools::register()`; see [the widget data connection guide](widget-data-connection.md).
 

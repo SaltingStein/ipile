@@ -3,6 +3,7 @@
 use App\Http\Controllers\AboutBoilerplateController;
 use App\Http\Controllers\Admin\AccessControlController;
 use App\Http\Controllers\Admin\ApiDocsSettingsController;
+use App\Http\Controllers\Admin\AssistantActivityController;
 use App\Http\Controllers\Admin\AssistantSettingsController;
 use App\Http\Controllers\Admin\AuthenticationSettingsController;
 use App\Http\Controllers\Admin\BlogCategoryController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OAuthController;
+use App\Http\Controllers\Auth\OAuthProfileController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
@@ -130,6 +132,8 @@ Route::middleware('redirect.registered')->group(function () {
 
 // Social sign-in. Registered users who start this flow link the provider to their account instead.
 Route::get('/auth/{provider}/redirect', [OAuthController::class, 'redirect'])->name('oauth.redirect');
+Route::get('/auth/complete-profile', [OAuthProfileController::class, 'create'])->name('oauth.profile.create');
+Route::post('/auth/complete-profile', [OAuthProfileController::class, 'store'])->middleware('throttle:oauth')->name('oauth.profile.store');
 Route::get('/auth/{provider}/callback', [OAuthController::class, 'callback'])->name('oauth.callback');
 
 Route::middleware(['auth', 'auth.session'])->group(function () {
@@ -227,6 +231,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::get('/admin/authentication', [AuthenticationSettingsController::class, 'edit'])->name('admin.authentication.edit');
             Route::put('/admin/authentication', [AuthenticationSettingsController::class, 'update'])->middleware('security.track:admin.settings_changed')->name('admin.authentication.update');
             Route::put('/admin/oauth-providers/{provider}', [OAuthProviderController::class, 'update'])->middleware('security.track:admin.settings_changed')->name('admin.oauth-providers.update');
+            Route::post('/admin/oauth-providers/{provider}/test', [OAuthProviderController::class, 'test'])->middleware('throttle:provider-tests')->name('admin.oauth-providers.test');
             Route::get('/admin/api-docs', [ApiDocsSettingsController::class, 'edit'])->name('admin.api-docs.edit');
             Route::put('/admin/api-docs', [ApiDocsSettingsController::class, 'update'])->middleware('security.track:admin.settings_changed')->name('admin.api-docs.update');
         });
@@ -266,6 +271,12 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::middleware('permission:manage_settings')->group(function () {
             Route::get('/admin/assistant', [AssistantSettingsController::class, 'edit'])->name('admin.assistant.edit');
             Route::put('/admin/assistant', [AssistantSettingsController::class, 'update'])->middleware('security.track:admin.settings_changed')->name('admin.assistant.update');
+        });
+
+        // Site assistant activity: the append-only interaction log (CORE-913).
+        Route::middleware('permission:view_ai_activity')->group(function () {
+            Route::get('/admin/assistant/activity', [AssistantActivityController::class, 'index'])->name('admin.assistant.activity.index');
+            Route::get('/admin/assistant/activity/{interaction}', [AssistantActivityController::class, 'show'])->name('admin.assistant.activity.show');
         });
 
         // Languages: site translation settings and the translations themselves.
@@ -315,12 +326,18 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         // Form builder for team and site forms: FormPolicy decides who may edit each form
         // (the team's owner and admins, or manage_forms for site forms).
         // The site assistant (Admin → Site assistant). Every message is screened by AssistantGuard.
-        Route::middleware('registered')->group(function () {
+        // use_ai_assistant is on the member role by default; removing it from a role takes the assistant away.
+        Route::middleware(['registered', 'permission:use_ai_assistant'])->group(function () {
             Route::get('/assistant/widget-claim', AssistantWidgetClaimController::class)
                 ->middleware('throttle:assistant-widget-claim')->name('assistant.widget-claim');
             Route::get('/assistant', [AssistantController::class, 'show'])->name('assistant.show');
             Route::post('/assistant/messages', [AssistantController::class, 'send'])->middleware('throttle:assistant')->name('assistant.send');
             Route::delete('/assistant/messages', [AssistantController::class, 'clear'])->name('assistant.clear');
+            // Streamed answers and the person's own conversations, for the chat bubble (CORE-911).
+            Route::post('/assistant/messages/stream', [AssistantController::class, 'stream'])->middleware('throttle:assistant')->name('assistant.stream');
+            Route::get('/assistant/conversations', [AssistantController::class, 'conversations'])->name('assistant.conversations');
+            Route::get('/assistant/conversations/{conversation}', [AssistantController::class, 'conversation'])->name('assistant.conversations.show');
+            Route::delete('/assistant/conversations/{conversation}', [AssistantController::class, 'destroyConversation'])->name('assistant.conversations.destroy');
         });
 
         Route::middleware('registered')->group(function () {

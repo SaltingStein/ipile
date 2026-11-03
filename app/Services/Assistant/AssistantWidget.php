@@ -136,7 +136,7 @@ class AssistantWidget
 
         $user = User::query()->find($reference['u'] ?? null);
 
-        if ($user === null || $user->is_guest || $user->isSuspended()
+        if ($user === null || $user->is_guest || $user->isSuspended() || ! $user->can('use_ai_assistant')
             || ! hash_equals($this->signInFingerprint($user), (string) ($reference['s'] ?? ''))
             || ! hash_equals($this->visitorFor($user, $config), $payload['visitor'])
             || $this->roleFor($user, $config) !== $payload['role']) {
@@ -237,7 +237,7 @@ class AssistantWidget
      */
     private function configFor(?User $user): ?array
     {
-        if ($user === null || $user->is_guest || $user->isSuspended()) {
+        if ($user === null || $user->is_guest || $user->isSuspended() || ! $user->can('use_ai_assistant')) {
             return null;
         }
 

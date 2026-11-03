@@ -4,15 +4,18 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Notifications\EventNotification;
+use App\Services\Ai\AiModels;
+use App\Services\Ai\DashboardAiManager;
 use App\Services\Assistant\AssistantDataPolicy;
 use App\Services\Assistant\AssistantExtensions;
+use App\Services\Assistant\AssistantToolLog;
 use App\Services\Auth\ApiTokens;
 use App\Services\Integrations\IntegrationManager;
 use App\Services\Mail\DashboardMailTransport;
 use App\Services\Mail\ZeptoMailTransport;
 use App\Services\Notifications\NotificationCatalog;
 use App\Services\RateLimits;
-use App\Services\Security\Analysis\ClaudeSecurityAnalyst;
+use App\Services\Security\Analysis\AiSecurityAnalyst;
 use App\Services\Security\Analysis\SecurityAnalyst;
 use App\Services\Security\SecurityEventCatalog;
 use App\Services\Security\SecurityExportPayload;
@@ -30,6 +33,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use InvalidArgumentException;
+use Laravel\Ai\AiManager;
 use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 
@@ -50,7 +54,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SecurityExportPayload::class);
         // Site assistant extensions: AssistantDataPolicy::block(), AssistantMetrics::define(), AssistantTools::register(), AssistantGuard::rule().
         $this->app->singleton(AssistantExtensions::class);
-        $this->app->bind(SecurityAnalyst::class, ClaudeSecurityAnalyst::class);
+        // Collects the assistant's tool calls for the interaction log while one request is answered.
+        $this->app->singleton(AssistantToolLog::class);
+        $this->app->bind(SecurityAnalyst::class, AiSecurityAnalyst::class);
+
+        // Agents prompted without a provider use the AI model chosen in the dashboard, never the package's .env keys.
+        $this->app->singleton(AiManager::class, fn ($app): AiManager => new DashboardAiManager($app));
+        config(['ai.default' => AiModels::DEFAULT_NAME]);
     }
 
     /**

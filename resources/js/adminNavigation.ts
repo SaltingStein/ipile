@@ -53,6 +53,7 @@ const adminGroupDefinitions: AdminGroupDefinition[] = [
         title: 'Campaigns',
         description: 'Landing pages for launches, events and promotions.',
         sections: [
+            { title: 'Marketing page', href: '/admin/marketing', description: 'Enable the free Ìpìlẹ̀ community homepage and set its GitHub link.', permissions: ['manage_settings'] },
             { title: 'Campaign pages', href: '/admin/campaigns', description: 'Build landing pages from a template with banners, videos, buttons and forms.', permissions: ['manage_campaigns'] },
         ],
     },
@@ -75,6 +76,7 @@ const adminGroupDefinitions: AdminGroupDefinition[] = [
             { title: 'Integrations', href: '/admin/integrations', description: 'Payments, SMS, email, analytics and AI providers.', permissions: ['manage_integrations'] },
             { title: 'Notifications', href: '/admin/notifications', description: 'Email and SMS for sign-ups, security alerts, invitations and payments.', permissions: ['manage_settings'] },
             { title: 'Site assistant', href: '/admin/assistant', description: 'The AI help assistant for signed-in people, its staff modes, the business figures it may read, and its fixed guard rails.', permissions: ['manage_settings'] },
+            { title: 'Assistant activity', href: '/admin/assistant/activity', description: 'Every assistant request: who asked, what they were allowed, the tools used and the outcome.', permissions: ['view_ai_activity'] },
         ],
     },
     {

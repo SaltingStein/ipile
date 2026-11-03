@@ -31,9 +31,13 @@ class RolesAndPermissionsSeeder extends Seeder
         'manage_blog',
         'manage_campaigns',
         'manage_translations',
+        // The site assistant itself (Admin → Site assistant). On every built-in role, so remove it from a role to narrow access.
+        'use_ai_assistant',
         // Staff modes of the site assistant (App\Services\Assistant\AssistantIntent), once switched on in Admin → Site assistant.
         'use_assistant_guidance',
         'use_assistant_analytics',
+        // Admin → Site assistant → Activity: every assistant request, with what the person was allowed at the time.
+        'view_ai_activity',
     ];
 
     /**
@@ -43,10 +47,11 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public const ROLES = [
         'super_admin' => [],
-        'admin' => ['manage_users', 'suspend_users', 'view_billing', 'edit_legal_content', 'publish_legal_content', 'manage_api_docs', 'view_security', 'use_assistant_guidance', 'use_assistant_analytics'],
+        'admin' => ['manage_users', 'suspend_users', 'view_billing', 'edit_legal_content', 'publish_legal_content', 'manage_api_docs', 'view_security', 'use_assistant_guidance', 'use_assistant_analytics', 'use_ai_assistant', 'view_ai_activity'],
         // People who run campaigns, the blog and site forms. Assign it in Admin → Roles & permissions.
-        'marketing' => ['manage_campaigns', 'manage_blog', 'manage_forms'],
-        'member' => [],
+        'marketing' => ['manage_campaigns', 'manage_blog', 'manage_forms', 'use_ai_assistant'],
+        // Given to every full account (App\Services\Auth\DefaultRole).
+        'member' => ['use_ai_assistant'],
     ];
 
     /**

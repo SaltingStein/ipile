@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import AdminLayout from '../../components/AdminLayout';
 import Button from '../../components/ui/Button';
 import Checkbox from '../../components/ui/Checkbox';
@@ -8,7 +8,11 @@ import TextField from '../../components/ui/TextField';
 
 interface AuthenticationSettingsValues {
     registration_enabled: boolean;
+    oauth_profile_required: boolean;
     guest_access_enabled: boolean;
+    guest_button_label: string;
+    guest_field_label: string;
+    guest_retention_days: number;
     magic_link_enabled: boolean;
     magic_link_expiry_minutes: number;
     trusted_device_days: number;
@@ -36,8 +40,11 @@ interface AuthenticationSettingsProps {
 const keepScroll = { preserveScroll: true };
 
 export default function AuthenticationSettings({ settings, roles, providers, signInMethods }: AuthenticationSettingsProps) {
+    const { errors } = usePage().props;
+
     return (
         <AdminLayout title="Sign-in & 2FA">
+            {errors.oauth && <p role="alert" className="text-sm text-rose-400">{errors.oauth}</p>}
             <Panel title="Available sign-in methods" description="The saved methods currently offered on the sign-in page. Connected providers appear here only when enabled and fully configured.">
                 <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-slate-200">
                     {signInMethods.map((method) => <li key={method}>{method}</li>)}
@@ -56,7 +63,11 @@ export default function AuthenticationSettings({ settings, roles, providers, sig
 function GeneralSettingsPanel({ settings, roles }: { settings: AuthenticationSettingsValues; roles: string[] }) {
     const { data, setData, put, processing, errors } = useForm({
         registration_enabled: settings.registration_enabled,
+        oauth_profile_required: settings.oauth_profile_required,
         guest_access_enabled: settings.guest_access_enabled,
+        guest_button_label: settings.guest_button_label,
+        guest_field_label: settings.guest_field_label,
+        guest_retention_days: String(settings.guest_retention_days),
         magic_link_enabled: settings.magic_link_enabled,
         magic_link_expiry_minutes: String(settings.magic_link_expiry_minutes),
         trusted_device_days: String(settings.trusted_device_days),
@@ -86,14 +97,31 @@ function GeneralSettingsPanel({ settings, roles }: { settings: AuthenticationSet
                     checked={data.registration_enabled}
                     onChange={(checked) => setData('registration_enabled', checked)}
                 />
+                <Checkbox name="oauth_profile_required" label="Require profile completion for connected sign-up"
+                    description="Ask new connected-account users to confirm their name and answer the published sign-up questions before creating an account. Existing linked accounts sign in as usual."
+                    checked={data.oauth_profile_required} onChange={(checked) => setData('oauth_profile_required', checked)} />
+                {errors.oauth_profile_required && <p className="text-sm text-rose-400">{errors.oauth_profile_required}</p>}
                 <Checkbox
                     label="Allow guest access"
                     name="guest_access_enabled"
-                    description="Show guest quick-start forms on the home page and allow new guest sessions. Turning this off keeps existing guest sessions."
+                    description="Let visitors try the app with just a nickname, without creating an account. Off by default: the home page then offers Create account and Sign in. Turning this off keeps existing guest accounts working, and they can still create a full account."
                     checked={data.guest_access_enabled}
                     onChange={(checked) => setData('guest_access_enabled', checked)}
                 />
                 {errors.guest_access_enabled && <p className="text-sm text-rose-400">{errors.guest_access_enabled}</p>}
+                {data.guest_access_enabled && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <TextField label="Guest button wording (optional)" name="guest_button_label" maxLength={40} placeholder="e.g. Try the demo"
+                            hint="Leave blank to use the home page design’s own wording."
+                            value={data.guest_button_label} onChange={(value) => setData('guest_button_label', value)} error={errors.guest_button_label} />
+                        <TextField label="Guest name field wording (optional)" name="guest_field_label" maxLength={40} placeholder="Pick a nickname"
+                            hint="Shown inside the empty name field."
+                            value={data.guest_field_label} onChange={(value) => setData('guest_field_label', value)} error={errors.guest_field_label} />
+                    </div>
+                )}
+                <TextField label="Delete unused guest accounts after (days)" name="guest_retention_days" type="number" min={0} max={3650}
+                    hint="0 keeps guest accounts. Otherwise at least 7: a guest account nobody has used for this long is deleted overnight. Full accounts are never affected."
+                    value={data.guest_retention_days} onChange={(value) => setData('guest_retention_days', value)} error={errors.guest_retention_days} />
                 <Checkbox
                     label="Allow sign-in by email link"
                     name="magic_link_enabled"
@@ -158,6 +186,7 @@ function GeneralSettingsPanel({ settings, roles }: { settings: AuthenticationSet
 }
 
 function ProviderPanel({ provider }: { provider: ProviderSettings }) {
+    const connectionTest = useForm({});
     const { data, setData, put, processing, errors, reset } = useForm({
         is_enabled: provider.is_enabled,
         client_id: provider.client_id ?? '',
@@ -208,6 +237,12 @@ function ProviderPanel({ provider }: { provider: ProviderSettings }) {
                     onChange={(checked) => setData('is_enabled', checked)}
                 />
                 <Button disabled={processing} className="self-start">Save {provider.label} settings</Button>
+                <Button type="button" variant="secondary" className="self-start"
+                    disabled={processing || connectionTest.processing || !provider.client_id || !provider.has_client_secret}
+                    onClick={() => connectionTest.post(`/admin/oauth-providers/${provider.provider}/test`)}>
+                    Test {provider.label} connection
+                </Button>
+                <p className="text-xs text-slate-400">Save your changes first. Testing opens the provider’s consent screen and checks the saved credentials and callback together, even while sign-in is disabled. It does not connect or create an account.</p>
             </form>
         </Panel>
     );
