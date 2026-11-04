@@ -27,6 +27,7 @@ interface Settings {
     retention_days: number;
     ai_enabled: boolean;
     ai_threshold: number;
+    ai_provider: string | null;
 }
 
 interface SecuritySettingsProps {
@@ -35,11 +36,14 @@ interface SecuritySettingsProps {
     actions: Option[];
     categories: Category[];
     aiAvailable: boolean;
+    aiProviders: { value: string; label: string }[];
     urls: { update: string; index: string; guide: string; integration: string };
 }
 
-export default function SecuritySettings({ settings, modes, actions, categories, aiAvailable, urls }: SecuritySettingsProps) {
-    const { data, setData, put, processing, errors } = useForm<Settings>(settings);
+export default function SecuritySettings({ settings, modes, actions, categories, aiAvailable, aiProviders, urls }: SecuritySettingsProps) {
+    // A saved model that has since been switched off is not in the list, so it shows as not chosen.
+    const savedProvider = aiProviders.some((provider) => provider.value === settings.ai_provider) ? settings.ai_provider : null;
+    const { data, setData, put, processing, errors } = useForm<Settings>({ ...settings, ai_provider: savedProvider });
     const fieldErrors = errors as Record<string, string>;
 
     function submit(event: FormEvent<HTMLFormElement>) {
@@ -122,12 +126,26 @@ export default function SecuritySettings({ settings, modes, actions, categories,
                         error={fieldErrors.retention_days} />
                 </Panel>
 
-                <Panel title="AI analyst" description="Sends a redacted summary of high-risk incidents to Claude for a plain-language explanation and a verdict. It advises administrators; it never acts on accounts.">
-                    {!aiAvailable && (
+                <Panel title="AI analyst" description="Sends a redacted summary of high-risk incidents (no names, emails or IP addresses) to the AI model you choose, for a plain-language explanation and a verdict. It advises administrators; it never acts on accounts.">
+                    {aiProviders.length === 0 ? (
                         <p className="text-sm text-amber-200">
-                            The Anthropic integration is not enabled yet. Set it up under <Link href={urls.integration} className="text-emerald-300 hover:text-emerald-200">Integrations → Anthropic Claude</Link>.
+                            No AI model is switched on yet. Set one up under <Link href={urls.integration} className="text-emerald-300 hover:text-emerald-200">Integrations → AI models</Link>.
                         </p>
+                    ) : !aiAvailable && (
+                        <p className="text-sm text-amber-200">Choose the AI model the analyst uses, then save.</p>
                     )}
+                    <div className="flex flex-col gap-1.5">
+                        <label htmlFor="ai_provider" className="text-sm font-medium text-slate-200">AI model for analysis</label>
+                        <select id="ai_provider" value={data.ai_provider ?? ''} onChange={(event) => setData('ai_provider', event.target.value || null)}
+                            aria-invalid={fieldErrors.ai_provider ? true : undefined}
+                            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 aria-invalid:border-rose-500">
+                            <option value="">Choose…</option>
+                            {aiProviders.map((provider) => <option key={provider.value} value={provider.value}>{provider.label}</option>)}
+                        </select>
+                        {fieldErrors.ai_provider
+                            ? <p className="text-sm text-rose-400">{fieldErrors.ai_provider}</p>
+                            : <p className="text-xs text-slate-400">Any model switched on in Integrations → AI models. It can differ from the site assistant's.</p>}
+                    </div>
                     <Checkbox name="ai_enabled" label="Analyse new incidents automatically" checked={data.ai_enabled} onChange={(checked) => setData('ai_enabled', checked)}
                         description="Each incident is analysed once, when it first reaches the score below. Administrators can always request an analysis by hand." />
                     <TextField label="Analyse incidents scoring at least" name="ai_threshold" type="number" min={1} max={100}

@@ -38,7 +38,7 @@ class AssistantSettingsControllerTest extends TestCase
         $this->actingAs($manager)->put(route('admin.assistant.update'), ['enabled' => true, 'provider' => 'openai', 'metrics' => ['blog.posts'], 'daily_messages' => 20, 'lockout' => 'sign_out'])
             ->assertSessionHasNoErrors();
 
-        $this->assertSame(['source' => 'built_in', 'enabled' => true, 'provider' => 'openai', 'metrics' => ['blog.posts'], 'daily_messages' => 20, 'lockout' => 'sign_out', 'staff_modes' => []], app(AssistantSettings::class)->all());
+        $this->assertSame(['source' => 'built_in', 'enabled' => true, 'provider' => 'openai', 'metrics' => ['blog.posts'], 'insights' => [], 'help_enabled' => true, 'business_context' => '', 'activity_retention_days' => 90, 'daily_messages' => 20, 'lockout' => 'sign_out', 'staff_modes' => []], app(AssistantSettings::class)->all());
         $this->actingAs($manager)->get(route('admin.assistant.edit'))->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Assistant')
             ->where('blockedTables', fn ($tables) => collect($tables)->contains('integrations'))

@@ -11,16 +11,18 @@ import type { SharedPageProps } from '../types';
 interface AuthLayoutProps {
     title: string;
     description?: string;
+    /** A wider card for longer pages such as first-run setup. */
+    wide?: boolean;
     children: ReactNode;
 }
 
-export default function AuthLayout({ title, description, children }: AuthLayoutProps) {
+export default function AuthLayout({ title, description, wide = false, children }: AuthLayoutProps) {
     const { status, errors, branding } = usePage<SharedPageProps>().props;
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-100">
             <Head title={`${title} | ${branding.name}`} />
-            <div className="flex w-full max-w-md flex-col gap-6">
+            <div className={`flex w-full flex-col gap-6 ${wide ? 'max-w-2xl' : 'max-w-md'}`}>
                 <Link href="/" className="text-center text-sm uppercase tracking-[0.25em] text-emerald-400">
                     <AppBrand />
                 </Link>

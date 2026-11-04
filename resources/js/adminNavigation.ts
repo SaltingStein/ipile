@@ -1,5 +1,8 @@
+import { productAdminNavigation } from './productAdminNavigation';
+
 /**
- * Admin pages grouped by purpose. Shared by the admin sidebar, the admin overview and the workspace sidebar so all three stay in sync.
+ * Ìpìlẹ̀'s admin pages grouped by purpose, followed by your product's pages from productAdminNavigation.ts.
+ * Shared by the admin sidebar, the admin overview and the workspace sidebar so all three stay in sync.
  * Each page lists the permissions that open it; the routes enforce the same rules.
  */
 export interface AdminSection {
@@ -14,17 +17,27 @@ export interface AdminGroup {
     sections: AdminSection[];
 }
 
-interface AdminSectionDefinition extends AdminSection {
+export interface AdminSectionDefinition extends AdminSection {
     permissions: string[];
 }
 
-interface AdminGroupDefinition {
+export interface AdminGroupDefinition {
     title: string;
     description: string;
     sections: AdminSectionDefinition[];
 }
 
-const adminGroupDefinitions: AdminGroupDefinition[] = [
+/**
+ * Ìpìlẹ̀'s admin groups, which products can add pages to by name.
+ */
+export type IpileAdminGroup = 'Appearance' | 'Post manager' | 'Forms' | 'Campaigns' | 'Security' | 'Platform' | 'Developers' | 'Legal & privacy';
+
+/**
+ * An entry in productAdminNavigation.ts: a new group, or pages added to the end of one of Ìpìlẹ̀'s groups.
+ */
+export type ProductAdminEntry = AdminGroupDefinition | { group: IpileAdminGroup; sections: AdminSectionDefinition[] };
+
+const ipileAdminGroups: (AdminGroupDefinition & { title: IpileAdminGroup })[] = [
     {
         title: 'Appearance',
         description: 'How your site looks, what people see in the menu and which languages it speaks.',
@@ -53,6 +66,7 @@ const adminGroupDefinitions: AdminGroupDefinition[] = [
         title: 'Campaigns',
         description: 'Landing pages for launches, events and promotions.',
         sections: [
+            { title: 'Marketing page', href: '/admin/marketing', description: 'Enable the free Ìpìlẹ̀ community homepage and set its GitHub link.', permissions: ['manage_settings'] },
             { title: 'Campaign pages', href: '/admin/campaigns', description: 'Build landing pages from a template with banners, videos, buttons and forms.', permissions: ['manage_campaigns'] },
         ],
     },
@@ -75,6 +89,7 @@ const adminGroupDefinitions: AdminGroupDefinition[] = [
             { title: 'Integrations', href: '/admin/integrations', description: 'Payments, SMS, email, analytics and AI providers.', permissions: ['manage_integrations'] },
             { title: 'Notifications', href: '/admin/notifications', description: 'Email and SMS for sign-ups, security alerts, invitations and payments.', permissions: ['manage_settings'] },
             { title: 'Site assistant', href: '/admin/assistant', description: 'The AI help assistant for signed-in people, its staff modes, the business figures it may read, and its fixed guard rails.', permissions: ['manage_settings'] },
+            { title: 'Assistant activity', href: '/admin/assistant/activity', description: 'Every assistant request: who asked, what they were allowed, the tools used and the outcome.', permissions: ['view_ai_activity'] },
         ],
     },
     {
@@ -93,6 +108,13 @@ const adminGroupDefinitions: AdminGroupDefinition[] = [
         ],
     },
 ];
+
+const adminGroupDefinitions: AdminGroupDefinition[] = productAdminNavigation.reduce<AdminGroupDefinition[]>(
+    (groups, entry) => 'group' in entry
+        ? groups.map((group) => (group.title === entry.group ? { ...group, sections: [...group.sections, ...entry.sections] } : group))
+        : [...groups, entry],
+    ipileAdminGroups,
+);
 
 /**
  * Every permission that opens at least one admin page.

@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Services\Forms\RegistrationForm;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
@@ -17,14 +18,16 @@ use Laravel\Socialite\Contracts\User as SocialiteUser;
  */
 class SocialLogin
 {
-    public function __construct(private AuthenticationSettings $settings) {}
+    public function __construct(private AuthenticationSettings $settings, private RegistrationForm $registrationForm) {}
 
     /**
      * Resolve the user that should be signed in for this identity.
      *
+     * @param  array{name: string, answers?: array<string, mixed>}|null  $profile
+     *
      * @throws SocialLoginException
      */
-    public function resolve(string $provider, SocialiteUser $socialUser, ?User $currentUser): User
+    public function resolve(string $provider, SocialiteUser $socialUser, ?User $currentUser, ?array $profile = null): User
     {
         $label = OAuthProviderRegistry::SUPPORTED[$provider] ?? ucfirst($provider);
 
@@ -60,9 +63,13 @@ class SocialLogin
             throw new SocialLoginException('Registration is currently closed.');
         }
 
-        return DB::transaction(function () use ($provider, $socialUser, $currentUser, $email): User {
+        if ($this->settings->oauthProfileRequired() && $profile === null) {
+            throw new OAuthProfileRequired($socialUser);
+        }
+
+        return DB::transaction(function () use ($provider, $socialUser, $currentUser, $email, $profile): User {
             $attributes = [
-                'name' => $socialUser->getName() ?: $socialUser->getNickname(),
+                'name' => $profile['name'] ?? ($socialUser->getName() ?: $socialUser->getNickname()),
                 'email' => $email,
                 'avatar_url' => $socialUser->getAvatar(),
                 'is_guest' => false,
@@ -74,6 +81,10 @@ class SocialLogin
             $user->save();
 
             $this->storeAccount($user, $provider, $socialUser);
+
+            if ($profile !== null) {
+                $this->registrationForm->record($user, $profile['answers'] ?? []);
+            }
 
             event(new Registered($user));
 

@@ -183,8 +183,13 @@ class SecurityEventCatalog
             new SecurityEventDefinition('assistant.sensitive_request', 'assistant', 'Asked the assistant for protected data',
                 'Someone asked the site assistant for passwords, one-time codes, recovery codes, API or payment keys, or other people’s data. They are signed out everywhere and must pass two-factor again; accounts without two-factor are suspended.', 1.0, forcedScore: 80),
 
+            // No longer recorded since CORE-913 (Admin → Site assistant → Activity logs every request); kept so older events still display.
             new SecurityEventDefinition('assistant.message_routed', 'assistant', 'Assistant answered a message',
                 'The built-in assistant answered a screened message. Records the intent, the mode that answered and whether it fell back from a staff mode, never the message.', 0.1),
+            new SecurityEventDefinition('assistant.scope_denied', 'assistant', 'Asked the assistant beyond their access',
+                'Someone asked a staff question (site guidance or analytics) without the permission for it, so the normal help assistant answered instead. Records the intent and channel, never the message.', 0.2),
+            new SecurityEventDefinition('assistant.rate_limited', 'assistant', 'Kept messaging the assistant past the daily limit',
+                'Someone sent several more messages after reaching their daily assistant limit. Records the limit, never the messages.', 0.3),
 
             // The widget service calls from its own servers, not the person's browser, so responses stop at an alert.
             new SecurityEventDefinition('mcp.tool_called', 'mcp', 'Widget read data',

@@ -57,7 +57,13 @@ Sign-in requests profile, email and post-read permissions required by the instal
 3. If this is a new account, registration must be open. Existing linked accounts can still sign in when registration is closed.
 4. Confirm any required two-factor challenge appears. Connected sign-in follows the site's usual two-factor and suspension rules.
 
-Saving credentials does not check them with the provider. Completing sign-in checks the client, secret, callback URL and consent settings together.
+Save the client ID and client secret before choosing the provider's **Test connection** button. You can test while the enable checkbox is off. The test opens the provider's consent screen and returns a success or error message to **Sign-in & 2FA**. It checks the saved client, secret and callback together without creating or connecting an account. Finish within ten minutes, using the same browser session.
+
+## Choose how new connected accounts register
+
+Under **Sign-in rules**, select **Require profile completion for connected sign-up** and choose **Save sign-in rules**. New connected-account users confirm their name and answer the published sign-up questions before an account is created. Their email comes from the provider and cannot be changed on this screen. They have ten minutes to complete the form before restarting sign-in.
+
+Clear the option to restore automatic account creation. Existing linked accounts sign in as usual in either mode. Closing registration prevents new accounts in both modes.
 
 ## Connect an existing account
 

@@ -9,7 +9,7 @@ All email and SMS about things that happen in the app go through `App\Services\N
 
 ## Add an event
 
-1. **Describe it** in `NotificationCatalog::all()` (`app/Services/Notifications/NotificationCatalog.php`): key, group, label, admin description, channels it can use, channels on by default, placeholders with example values, default email subject/body, default SMS text (or `null`), optional button label. Copy a neighbouring entry.
+1. **Describe it** with `Notify::define(new NotificationEvent(...))` in `boot()` of `app/Providers/ProductServiceProvider.php` (never edit `NotificationCatalog`): key, group, label, admin description, channels it can use, channels on by default, placeholders with example values, default email subject/body, default SMS text (or `null`), optional button label. Copy the shape of an entry in `NotificationCatalog`. A key that already exists throws; to change one of Ìpìlẹ̀'s events use `Notify::override()`.
    - `{name}`, `{app_name}` and `{time}` exist for every event; do not list them.
    - Use `required: true` only when people cannot use their account without the email.
 2. **Send it** where the thing happens:

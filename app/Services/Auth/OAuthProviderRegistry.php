@@ -46,13 +46,14 @@ class OAuthProviderRegistry
     /**
      * Point Socialite at the dashboard credentials for the provider. Returns false when it is not usable.
      */
-    public function configure(string $provider): bool
+    public function configure(string $provider, bool $allowDisabled = false): bool
     {
         if (! array_key_exists($provider, self::SUPPORTED)) {
             return false;
         }
 
-        $settings = OAuthProvider::query()->where('provider', $provider)->where('is_enabled', true)->first();
+        $settings = OAuthProvider::query()->where('provider', $provider)
+            ->when(! $allowDisabled, fn ($query) => $query->where('is_enabled', true))->first();
 
         if ($settings === null || ! $settings->isConfigured()) {
             return false;

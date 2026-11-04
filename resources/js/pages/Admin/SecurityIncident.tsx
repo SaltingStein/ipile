@@ -126,7 +126,7 @@ function AnalysisPanel({ incident, ai, urls }: Pick<SecurityIncidentProps, 'inci
     const analysis = incident.ai.analysis;
 
     return (
-        <Panel title="AI analyst" description="A second opinion from Claude on a redacted summary of this incident (no names, emails or IP addresses). Advisory only: it never changes the account.">
+        <Panel title="AI analyst" description="A second opinion from the AI model chosen in Monitoring settings, on a redacted summary of this incident (no names, emails or IP addresses). Advisory only: it never changes the account.">
             {incident.ai.status === 'pending' && <p className="text-sm text-slate-300" role="status">Analysis in progress… this page refreshes when it is ready.</p>}
             {incident.ai.error && <StatusMessage tone="error" message={incident.ai.error} />}
             {errors.analysis && <StatusMessage tone="error" message={errors.analysis} />}
@@ -155,7 +155,7 @@ function AnalysisPanel({ incident, ai, urls }: Pick<SecurityIncidentProps, 'inci
                 </Button>
             ) : (
                 <p className="text-sm text-slate-400">
-                    Not configured. Add an Anthropic API key under <Link href={urls.integration} className="text-emerald-300 hover:text-emerald-200">Integrations → Anthropic Claude</Link>
+                    Not configured. Choose a switched-on AI model for the analyst in <Link href={urls.integration} className="text-emerald-300 hover:text-emerald-200">Monitoring settings</Link>
                     {!ai.enabled && ', then turn on AI analysis in Monitoring settings to analyse new incidents automatically'}.
                 </p>
             )}

@@ -5,17 +5,59 @@ namespace App\Services\Notifications;
 use InvalidArgumentException;
 
 /**
- * Every event the app can notify people about.
+ * Every event the app can notify people about: Ìpìlẹ̀'s own, then those added from service providers.
  *
- * Adding an event is a code change (a definition here plus a `Notify::event()` call where it happens);
- * choosing its channels and wording never is.
+ * Products add events with {@see Notify::define()} instead of editing this file. Choosing an event's
+ * channels and wording is never a code change (Admin → Notifications).
  */
 class NotificationCatalog
 {
     /**
-     * @return array<string, NotificationEvent> keyed by event key
+     * Events added from service providers, keyed by event key.
+     *
+     * @var array<string, NotificationEvent>
+     */
+    private array $registered = [];
+
+    /**
+     * Add an event. Replacing an existing event (one of Ìpìlẹ̀'s or an earlier registration) must be asked for.
+     *
+     * @throws InvalidArgumentException when the key exists and `$override` is false
+     */
+    public function register(NotificationEvent $event, bool $override = false): void
+    {
+        if (! $override && $this->has($event->key)) {
+            throw new InvalidArgumentException("Notification event [{$event->key}] already exists. Use Notify::override() to replace it.");
+        }
+
+        $this->registered[$event->key] = $event;
+    }
+
+    /**
+     * @return array<string, NotificationEvent> keyed by event key: Ìpìlẹ̀'s first (an override keeps its place), then added ones
      */
     public function all(): array
+    {
+        return [...$this->builtIn(), ...$this->registered];
+    }
+
+    /**
+     * @throws InvalidArgumentException for an unknown key, so a typo fails loudly in development.
+     */
+    public function find(string $key): NotificationEvent
+    {
+        return $this->all()[$key] ?? throw new InvalidArgumentException("Unknown notification event [{$key}]. Register it with Notify::define() in a service provider.");
+    }
+
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->all());
+    }
+
+    /**
+     * @return array<string, NotificationEvent>
+     */
+    private function builtIn(): array
     {
         $mail = [NotificationEvent::MAIL];
         $mailAndSms = [NotificationEvent::MAIL, NotificationEvent::SMS];
@@ -135,18 +177,5 @@ Review the incident and decide whether to restore the account or take further ac
         ];
 
         return collect($events)->keyBy('key')->all();
-    }
-
-    /**
-     * @throws InvalidArgumentException for an unknown key, so a typo fails loudly in development.
-     */
-    public function find(string $key): NotificationEvent
-    {
-        return $this->all()[$key] ?? throw new InvalidArgumentException("Unknown notification event [{$key}]. Add it to ".self::class.'.');
-    }
-
-    public function has(string $key): bool
-    {
-        return array_key_exists($key, $this->all());
     }
 }

@@ -5,6 +5,7 @@ use App\Models\SecurityEvent;
 use App\Models\SecurityIncident;
 use App\Models\SecurityRiskState;
 use App\Models\User;
+use App\Services\Assistant\InsightSummaries;
 use App\Services\Auth\ApiTokens;
 use App\Services\Blog\BlogAssets;
 use App\Services\Campaigns\CampaignAssets;
@@ -132,6 +133,9 @@ Artisan::command('translations:prune', function (StringCollector $collector) {
 Schedule::command('sanctum:prune-expired --hours=24')->dailyAt('02:00');
 Schedule::command('api-tokens:prune-idle')->dailyAt('02:05');
 
+// Does nothing until a guest retention period is set in Admin → Sign-in & 2FA.
+Schedule::command('guests:prune')->dailyAt('02:10');
+
 // Runs whether or not Aegis is on, so retention is honoured after it is switched off.
 Schedule::command('security:prune')->dailyAt('02:15');
 Schedule::command('security:train')->dailyAt('02:30')->withoutOverlapping();
@@ -141,3 +145,14 @@ Schedule::command('campaigns:prune-images')->dailyAt('02:50');
 // Does nothing while translation is off or has no AI model; the daily limit in Admin → Languages caps the cost.
 Schedule::command('translations:translate')->everyTenMinutes()->withoutOverlapping();
 Schedule::command('translations:prune')->dailyAt('03:00');
+
+Artisan::command('assistant:refresh-insights', function (InsightSummaries $summaries) {
+    $this->info("Refreshed {$summaries->refresh()} aggregate insight summaries.");
+
+    return 0;
+})->purpose('Refresh opted-in, count-only SMS and security insight summaries');
+
+Schedule::command('assistant:refresh-insights')->everyFiveMinutes()->withoutOverlapping();
+
+// Retention for assistant chats and the activity log is set in Admin → Site assistant (90 days by default).
+Schedule::command('assistant:prune-activity')->dailyAt('03:10');

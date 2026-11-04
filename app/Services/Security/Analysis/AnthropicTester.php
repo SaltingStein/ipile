@@ -2,6 +2,7 @@
 
 namespace App\Services\Security\Analysis;
 
+use App\Services\Ai\AnthropicApi;
 use App\Services\Integrations\IntegrationTester;
 use App\Services\Integrations\IntegrationTestResult;
 use Illuminate\Http\Client\ConnectionException;
@@ -18,9 +19,9 @@ class AnthropicTester implements IntegrationTester
         try {
             $response = Http::withHeaders(array_filter([
                 'x-api-key' => (string) ($config['api_key'] ?? ''),
-                'anthropic-version' => ClaudeSecurityAnalyst::API_VERSION,
-                ClaudeSecurityAnalyst::WORKSPACE_HEADER => ClaudeSecurityAnalyst::workspaceId($config),
-            ]))->acceptJson()->timeout(15)->get(ClaudeSecurityAnalyst::API_URL.'/models', ['limit' => 1]);
+                'anthropic-version' => AnthropicApi::API_VERSION,
+                AnthropicApi::WORKSPACE_HEADER => AnthropicApi::workspaceId($config),
+            ]))->acceptJson()->timeout(15)->get(AnthropicApi::API_URL.'/models', ['limit' => 1]);
         } catch (ConnectionException) {
             return IntegrationTestResult::failed(__('Could not reach the Anthropic API.'));
         }

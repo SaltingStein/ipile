@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Ai\AiModels;
 use App\Services\Security\Analysis\SecurityAnalyst;
 use App\Services\Security\Security;
 use App\Services\Security\SecurityAction;
@@ -21,7 +22,7 @@ use Inertia\Response;
  */
 class SecuritySettingsController extends Controller
 {
-    public function edit(SecuritySettings $settings, SecurityEventCatalog $catalog, SecurityAnalyst $analyst): Response
+    public function edit(SecuritySettings $settings, SecurityEventCatalog $catalog, SecurityAnalyst $analyst, AiModels $models): Response
     {
         return Inertia::render('Admin/SecuritySettings', [
             'settings' => $settings->toArray(),
@@ -42,16 +43,17 @@ class SecuritySettingsController extends Controller
                 'event_count' => count($category['events']),
             ], $catalog->categories()),
             'aiAvailable' => $analyst->isAvailable(),
+            'aiProviders' => collect($models->enabled())->map(fn (string $label, string $key) => ['value' => $key, 'label' => $label])->values(),
             'urls' => [
                 'update' => route('admin.security.settings.update'),
                 'index' => route('admin.security.index'),
                 'guide' => route('admin.security.guide'),
-                'integration' => route('admin.integrations.show', 'anthropic'),
+                'integration' => route('admin.integrations.index'),
             ],
         ]);
     }
 
-    public function update(Request $request, SecuritySettings $settings, SecurityEventCatalog $catalog): RedirectResponse
+    public function update(Request $request, SecuritySettings $settings, SecurityEventCatalog $catalog, AiModels $models): RedirectResponse
     {
         $threshold = ['nullable', 'integer', 'min:1', 'max:100'];
         $validated = $request->validate([
@@ -67,6 +69,8 @@ class SecuritySettingsController extends Controller
             'retention_days' => ['required', 'integer', 'min:7', 'max:730'],
             'ai_enabled' => ['required', 'boolean'],
             'ai_threshold' => ['required', 'integer', 'min:1', 'max:100'],
+            // Optional, so older clients keep the saved choice; must be a switched-on AI model.
+            'ai_provider' => ['sometimes', 'nullable', Rule::in(array_keys($models->enabled()))],
         ]);
 
         $this->ensureLadderIsOrdered($validated['thresholds']);

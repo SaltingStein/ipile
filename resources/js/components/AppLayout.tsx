@@ -1,5 +1,6 @@
 import AppBrand from './AppBrand';
 import BrandFooter from './BrandFooter';
+import AssistantBubble from './AssistantBubble';
 import AssistantWidget from './AssistantWidget';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -88,6 +89,7 @@ export default function AppLayout({ title, children }: AppLayoutProps) {
             </main>
             <BrandFooter className="border-t border-slate-800 lg:col-start-2 lg:row-start-3" />
             <AssistantWidget config={user && !user.is_guest ? assistantWidget : null} />
+            <AssistantBubble />
         </div>
     );
 }

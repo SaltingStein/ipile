@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Services\Integrations\IntegrationCatalog;
 use App\Services\Integrations\IntegrationDefinition;
 use App\Services\Integrations\IntegrationManager;
+use App\Services\Mail\MailProviders;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,6 +22,7 @@ class IntegrationController extends Controller
     public function __construct(
         private IntegrationCatalog $catalog,
         private IntegrationManager $integrations,
+        private MailProviders $mailProviders,
     ) {}
 
     /**
@@ -29,7 +32,32 @@ class IntegrationController extends Controller
     {
         return Inertia::render('Admin/Integrations', [
             'groups' => $this->integrations->forDashboard(),
+            'mailDelivery' => [
+                'preferred' => $this->mailProviders->preferred(),
+                'active' => $this->mailProviders->active()?->provider,
+                'providers' => array_map(fn (IntegrationDefinition $definition) => [
+                    'provider' => $definition->provider,
+                    'label' => $definition->label,
+                    'is_enabled' => $this->integrations->isEnabled($definition->provider),
+                ], $this->mailProviders->available()),
+            ],
         ]);
+    }
+
+    /**
+     * Choose which email provider sends the site's email. Null means "the first one switched on".
+     */
+    public function updateMailProvider(Request $request): RedirectResponse
+    {
+        $available = array_map(fn (IntegrationDefinition $definition) => $definition->provider, $this->mailProviders->available());
+
+        $validated = $request->validate([
+            'provider' => ['nullable', 'string', Rule::in($available)],
+        ]);
+
+        $this->mailProviders->setPreferred($validated['provider'] ?? null);
+
+        return back()->with('status', __('Email delivery saved.'));
     }
 
     /**
