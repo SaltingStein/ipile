@@ -35,6 +35,8 @@ class AssistantDataPolicy
         'trusted_devices',
         'team_invitations',
         'settings',
+        // Per-team settings can hold encrypted team secrets (TeamSetting::storeSecret()).
+        'team_settings',
         'security_events',
         'security_incidents',
         'security_risk_states',

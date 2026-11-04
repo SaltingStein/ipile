@@ -189,9 +189,10 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     // Members of roles that require two-factor authentication must set it up before using the app.
     // The dashboard itself lives in routes/app.php with the rest of your app's pages.
     Route::middleware('two-factor.configured')->group(function () {
-        // Admin overview: open to anyone who can reach at least one admin page (see resources/js/adminNavigation.ts).
+        // Admin overview: open to anyone who can reach at least one admin page (see resources/js/adminNavigation.ts),
+        // including product pages whose permission was registered with Permissions::define(..., admin: true).
         Route::get('/admin', fn () => Inertia::render('Admin/Overview'))
-            ->middleware('permission:manage_settings|edit_legal_content|publish_legal_content|manage_access|manage_integrations|view_security|manage_security|manage_forms|manage_blog|manage_campaigns|manage_translations')
+            ->middleware('can:open-admin')
             ->name('admin.index');
         Route::permanentRedirect('/admin/site-settings', '/admin');
 
@@ -259,6 +260,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
 
         Route::middleware('permission:manage_integrations')->group(function () {
             Route::get('/admin/integrations', [IntegrationController::class, 'index'])->name('admin.integrations.index');
+            Route::put('/admin/integrations/mail/preferred', [IntegrationController::class, 'updateMailProvider'])->middleware('security.track:admin.integration_changed')->name('admin.integrations.mail-provider');
             Route::get('/admin/integrations/{provider}', [IntegrationController::class, 'show'])->name('admin.integrations.show');
             Route::put('/admin/integrations/{provider}', [IntegrationController::class, 'update'])->middleware('security.track:admin.integration_changed')->name('admin.integrations.update');
             Route::post('/admin/integrations/{provider}/test', [IntegrationController::class, 'test'])

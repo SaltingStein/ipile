@@ -15,6 +15,12 @@ composer dev       # runs the app, queue worker and Vite together
 
 Open the app, sign in as the super admin, and you land on the dashboard. While the app runs locally, the dashboard shows a short "Make this app yours" checklist.
 
+### First deploy to a server
+
+Until the site has a super admin, every page opens the setup screen at `/setup`, so nobody can use or sign up on a fresh deploy before you claim it. The screen checks the server (HTTPS, `APP_URL`, debug mode off, production mode, writable folders, queue, storage link, cached config), then asks for a one-time setup key that only someone on the server can get: `php artisan ipile:setup-key` (the first key is also written to `storage/logs`). Prefer the terminal? `php artisan ipile:setup` creates the super admin there. After setup the super admin goes straight to turning on two-factor sign-in.
+
+If the server has no `APP_KEY` or no database tables yet, the site shows the install commands instead of an error page. Database errors on a site that is already installed show the normal error page.
+
 > Blank page after `php artisan serve`? Either keep `npm run dev` running, or run `npm run build`. A leftover `public/hot` file from a crashed Vite run also causes it: delete the file.
 
 ---
@@ -28,12 +34,14 @@ Keep your product in these places and Ìpìlẹ̀ updates stay painless.
 | Your pages' routes | `routes/app.php` |
 | Your API routes | `routes/app-api.php` (everything under `/api/v1` is documented automatically) |
 | Your sidebar links | `resources/js/appNavigation.ts` |
+| Your admin menu entries | `resources/js/productAdminNavigation.ts` |
+| Your permissions, notification events, integrations and other registrations | `app/Providers/ProductServiceProvider.php` (see [Extension points](#extension-points)) |
 | Your pages | `resources/js/pages/` (one `.tsx` file per page) |
 | Shared UI pieces | `resources/js/components/ui/` (`Panel`, `StatTile`, `EmptyState`, `Button`, `TextField`, `Checkbox`, `StatusMessage`) |
 | Help for your users | `resources/help/*.md` |
 | Controllers, models, services | the usual Laravel places (`app/Http/Controllers`, `app/Models`, `app/Services`) |
 
-Ìpìlẹ̀'s own routes live in `routes/web.php` and `routes/api.php`. You can edit them, but then a boilerplate update may conflict.
+Ìpìlẹ̀'s own routes live in `routes/web.php` and `routes/api.php`. You can edit them, but then a boilerplate update may conflict. The same goes for Ìpìlẹ̀'s lists (`NotificationCatalog`, `IntegrationCatalog`, `PermissionRegistry`, `adminNavigation.ts`): add to them from your own files instead.
 
 ---
 
@@ -84,7 +92,11 @@ Add a line to `resources/js/appNavigation.ts`:
 
 Ìpìlẹ̀ uses roles and permissions ([spatie/laravel-permission](https://spatie.be/docs/laravel-permission)). The super admin passes every check.
 
-1. **Create the permission:** add it to `RolesAndPermissionsSeeder::PERMISSIONS` (and to a role in `ROLES` if it should be granted by default), then run `php artisan db:seed --class=RolesAndPermissionsSeeder`.
+1. **Create the permission:** register it in `boot()` of `app/Providers/ProductServiceProvider.php`, then run `php artisan ipile:sync-permissions`:
+   ```php
+   Permissions::define('view_reports', 'See the reports pages', grantTo: ['admin']);
+   ```
+   `grantTo` roles get it when it is first created; after that, who has it is up to admins. Add `admin: true` if it opens one of your admin pages, so its holders can also open the admin overview. A test fails if a route checks a permission nobody registered, which catches typos.
 2. **Grant it:** in **Admin → Roles & permissions**.
 3. **Protect the route:** `->middleware('permission:view_reports')`.
 4. **Hide UI bits:** in React, `<Can perform="view_reports">…</Can>`; in PHP, `$user->can('view_reports')`.
@@ -107,7 +119,9 @@ Operator settings live in the database and are edited in the admin area, never i
    Setting::store('reports.weekly_email', $enabled ? '1' : '0');
    ```
 2. **Add the admin page:** a controller plus a page wrapped in `AdminLayout` (copy `Admin/Theme.tsx` and its controller as a starting point). Put the routes in `routes/app.php` with `->middleware(['permission:manage_settings', 'security.track:admin.settings_changed'])`. The second middleware records the change in the security log.
-3. **List it in the admin menu:** add an entry to the right group (or a new group) in `resources/js/adminNavigation.ts`, with the same permission as the route.
+3. **List it in the admin menu:** add an entry to `resources/js/productAdminNavigation.ts`, as a new group or inside one of Ìpìlẹ̀'s groups (`{ group: 'Platform', sections: [...] }`), with the same permission as the route.
+
+**One value per team** instead of one for the whole site? Use `TeamSetting::valueOf($team, 'reports.weekly_summary', '1')` and `TeamSetting::store(...)`. `TeamSetting::resolve($team, $key)` returns the team's value, else the site-wide `Setting`, else the default.
 
 **Secrets** (API keys, passwords) belong in **Integrations** instead, which encrypts them and never sends them back to the browser (next recipe).
 
@@ -116,7 +130,8 @@ Operator settings live in the database and are edited in the admin area, never i
 Credentials are entered in **Admin → Integrations** and stored encrypted.
 
 - **Use one that exists** (payments, SMS, email, analytics, AI): `app(IntegrationManager::class)->enabledConfig('paystack')` returns its settings, or `null` when it is switched off.
-- **Add a new one:** add an `IntegrationDefinition` to `app/Services/Integrations/IntegrationCatalog.php` (fields, help text, optional connection tester). The admin form is generated from it.
+- **Add a new one:** register an `IntegrationDefinition` with `Integrations::define(...)` in `ProductServiceProvider` (fields, help text, optional connection tester). The admin form is generated from it.
+- **Add an email provider:** the same, with `IntegrationType::Mail` and `transport: YourTransport::class` (a Symfony mailer transport; copy `app/Services/Mail/ResendTransport.php`). Admins pick it under **Admin → Integrations → Email delivery → Send email through**, next to ZeptoMail and Resend.
 
 ### …use an AI model in my feature
 
@@ -144,7 +159,7 @@ For something users should be told about, use a notification event. Admins can t
 Notify::event('report.ready')->to($user)->with(['link' => route('reports')])->send();
 ```
 
-Adding a new event takes a few lines in `NotificationCatalog`; see [dev notes → Notifications](dev-notes.md#notifications-email-and-sms).
+Adding a new event takes one `Notify::define(...)` call in `ProductServiceProvider`; see [dev notes → Notifications](dev-notes.md#notifications-email-and-sms).
 
 For a one-off SMS: `app(SmsSender::class)->queue('08031234567', 'Your code is 123456', $user)`. Regular Laravel `Mail` works too and goes through the email provider set up in Integrations.
 
@@ -256,6 +271,25 @@ Staff can also use two extra modes of the same assistant, **Site guidance** and 
 
 ---
 
+## Extension points
+
+Everything below is called from `boot()` in `app/Providers/ProductServiceProvider.php`. Ìpìlẹ̀ never changes that file, so your additions survive updates. Each one is covered by a test in Ìpìlẹ̀ (`tests/Feature/ExtensionPointsTest.php` unless noted).
+
+| To add | Call | Notes |
+|---|---|---|
+| A permission | `Permissions::define('view_reports', 'See reports', grantTo: ['admin'], admin: false)` | Then `php artisan ipile:sync-permissions` (`SyncPermissionsCommandTest`) |
+| A notification event | `Notify::define(new NotificationEvent(...))` | `Notify::override()` replaces one of Ìpìlẹ̀'s |
+| An integration | `Integrations::define(new IntegrationDefinition(...))` | `Integrations::override()` replaces one of Ìpìlẹ̀'s |
+| An email provider | `Integrations::define(...)` with `IntegrationType::Mail` and `transport:` | Chosen in Admin → Integrations (`MailProviderChoiceTest`) |
+| An admin menu entry | an entry in `resources/js/productAdminNavigation.ts` | A new group, or `{ group: 'Platform', sections }` |
+| A per-team setting | `TeamSetting::valueOf()` / `store()` / `resolve()` / `storeSecret()` | No registration needed (`TeamSettingTest`) |
+| A security event | `Security::define(new SecurityEventDefinition(...))` | See [Extending Aegis](aegis-extension-guide.md) |
+| Assistant limits, figures and tools | `AssistantDataPolicy::block()`, `AssistantMetrics::define()`, `AssistantTools::register()`, `AssistantGuard::rule()` | See [teach the AI assistant about my data](#teach-the-ai-assistant-about-my-data) |
+
+Registering a key that already exists throws, so you can't replace something of Ìpìlẹ̀'s by accident.
+
+---
+
 ## Before you ship a change
 
 ```bash
@@ -271,7 +305,9 @@ npm run build                  # production assets
 
 1. Add the boilerplate as a second remote once: `git remote add ipile <ipile repo url>`.
 2. Pull updates when you want them: `git fetch ipile && git merge ipile/<branch>` (the branch the Ìpìlẹ̀ team releases from).
-3. Run `composer install`, `php artisan migrate`, `npm install`, `php artisan boost:update`, then the checks above.
+3. Run `composer install`, `php artisan migrate`, `php artisan ipile:sync-permissions`, `npm install`, `php artisan boost:update`, then the checks above.
+
+On every production deploy, run `php artisan ipile:sync-permissions` after `php artisan migrate --force`. It creates new permissions (Ìpìlẹ̀'s and yours) and never removes anything admins set.
 
 Code in the places listed under "Where your code goes" rarely conflicts. If you changed an Ìpìlẹ̀ file, expect to resolve that file by hand.
 

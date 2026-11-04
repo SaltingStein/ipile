@@ -10,9 +10,10 @@ use App\Services\Assistant\AssistantDataPolicy;
 use App\Services\Assistant\AssistantExtensions;
 use App\Services\Assistant\AssistantToolLog;
 use App\Services\Auth\ApiTokens;
-use App\Services\Integrations\IntegrationManager;
+use App\Services\Auth\PermissionRegistry;
+use App\Services\Integrations\IntegrationCatalog;
 use App\Services\Mail\DashboardMailTransport;
-use App\Services\Mail\ZeptoMailTransport;
+use App\Services\Mail\MailProviders;
 use App\Services\Notifications\NotificationCatalog;
 use App\Services\RateLimits;
 use App\Services\Security\Analysis\AiSecurityAnalyst;
@@ -45,6 +46,11 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(SmsTransport::class, SmppTransport::class);
+
+        // Registries that products add to from their own service providers (see app/Providers/ProductServiceProvider.php).
+        $this->app->singleton(NotificationCatalog::class);
+        $this->app->singleton(IntegrationCatalog::class);
+        $this->app->singleton(PermissionRegistry::class);
 
         // Aegis: singletons so events, signals, response handlers and export settings added through Security:: last for the request.
         $this->app->singleton(SecurityEventCatalog::class);
@@ -90,6 +96,10 @@ class AppServiceProvider extends ServiceProvider
         // Super admins pass every permission check, including Spatie's `permission:` middleware.
         Gate::before(fn (User $user) => $user->hasRole('super_admin') ? true : null);
 
+        // The admin overview (/admin) opens for anyone who can reach at least one admin page, Ìpìlẹ̀'s or the product's.
+        Gate::define('open-admin', fn (User $user): bool => collect($this->app->make(PermissionRegistry::class)->adminPermissions())
+            ->contains(fn (string $permission) => $user->can($permission)));
+
         // Laravel's own verification and reset emails use the wording from Admin → Notifications.
         VerifyEmail::toMailUsing(fn (object $notifiable, string $url): MailMessage => EventNotification::mailMessage(
             app(NotificationCatalog::class)->find('auth.verify_email'),
@@ -106,7 +116,7 @@ class AppServiceProvider extends ServiceProvider
             ], $notifiable),
         ));
 
-        // The `dashboard` mailer sends through the provider enabled in Admin → Integrations, else the fallback mailer.
+        // The `dashboard` mailer sends through the email provider chosen in Admin → Integrations, else the fallback mailer.
         Mail::extend('dashboard', function (array $config): DashboardMailTransport {
             $fallback = $config['fallback'] ?? 'log';
 
@@ -115,8 +125,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return new DashboardMailTransport(
-                $this->app->make(IntegrationManager::class),
-                $this->app->make(ZeptoMailTransport::class),
+                $this->app->make(MailProviders::class),
                 Mail::mailer($fallback)->getSymfonyTransport(),
             );
         });

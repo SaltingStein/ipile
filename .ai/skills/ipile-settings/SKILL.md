@@ -11,7 +11,7 @@ Operator-changeable values live in the database and are edited in the admin area
 
 | The value is… | Use |
 |---|---|
-| A secret or a third-party credential (API key, password, token) | **Integrations** (`IntegrationCatalog`), encrypted and write-only |
+| A secret or a third-party credential (API key, password, token) | **Integrations** (`Integrations::define()`), encrypted and write-only |
 | A normal option (toggle, number, text, choice) | The **`Setting`** model behind a small settings service |
 | Per-user or per-team data | A real column or table, not `Setting` |
 
@@ -38,14 +38,14 @@ Operator-changeable values live in the database and are edited in the admin area
    ```
    `security.track:admin.settings_changed` records the change in the Aegis security log. Use a dedicated permission instead of `manage_settings` if a different group of people should manage it.
 4. **Page** in `resources/js/pages/Admin/` wrapped in `AdminLayout`, using `Panel`, `TextField`, `Checkbox`, `Button` and `useForm`. Do not add a second `<h1>`; `AdminLayout` renders the title.
-5. **Admin menu:** add `{ title, href, description, permissions }` to `resources/js/adminNavigation.ts` with the same permissions as the route. Ìpìlẹ̀'s groups are Appearance, Post manager, Forms, Campaigns, Security, Platform, Developers and Legal & privacy; for product features add a group named after the product area (e.g. "Billing").
+5. **Admin menu:** add `{ title, href, description, permissions }` to `resources/js/productAdminNavigation.ts` (not `adminNavigation.ts`, which is Ìpìlẹ̀'s), either inside `{ group: 'Platform', sections: [...] }` for one of Ìpìlẹ̀'s groups or as a new group, with the same permissions as the route. A new permission is registered with `Permissions::define(..., admin: true)` (see `ipile-pages`). Ìpìlẹ̀'s groups are Appearance, Post manager, Forms, Campaigns, Security, Platform, Developers and Legal & privacy; for product features add a group named after the product area (e.g. "Billing").
 6. **Tests:** managers can view and save; others get 403; invalid input is rejected; the value takes effect.
 
 ## A per-team setting
 
 When each team should choose for itself (e.g. "send our team a weekly summary"):
 
-1. A column on `teams` via a migration (`php artisan make:migration add_weekly_summary_to_teams_table`), with a sensible default, plus a cast on `Team`.
+1. Store it with `TeamSetting` (no migration): `TeamSetting::valueOf($team, 'reports.weekly_summary', '1')` and `TeamSetting::store($team, 'reports.weekly_summary', '0')`. `TeamSetting::resolve($team, $key, $default)` returns the team's value, else the site-wide `Setting` with the same key, else the default; `TeamSetting::forget()` goes back to the site value. A team's own secret (its payment key) uses `TeamSetting::storeSecret()` / `secretOf()`, encrypted, never in Inertia props. Use a real column on `teams` (migration plus cast) instead when you need to query or sort teams by the value.
 2. Edit it where team settings already live (the team page, `resources/js/pages/Teams/Show.tsx`, "Team details") or on your own team page, saved by a controller that calls `Gate::authorize('update', $team)` (owner and team admins).
 3. Read it from `$request->user()->currentTeam` or the team being processed.
 4. Tests: owner/admin can change it, a plain member gets 403, a non-member gets 404.
@@ -54,7 +54,9 @@ If the developer wants both (a site-wide on/off switch for operators and a per-t
 
 ## A new integration
 
-Add an `IntegrationDefinition` to `app/Services/Integrations/IntegrationCatalog.php` with its `IntegrationType`, label, description and `IntegrationField`s (`IntegrationField::secret()` for secrets, `::select()` for choices, `pattern:` for format checks). The admin form at Admin → Integrations is generated from it. Optionally add an `IntegrationTester` for the "Test connection" button.
+Register an `IntegrationDefinition` with `Integrations::define(...)` in `boot()` of `app/Providers/ProductServiceProvider.php` (never edit `IntegrationCatalog`), with its `IntegrationType`, label, description and `IntegrationField`s (`IntegrationField::secret()` for secrets, `::select()` for choices, `pattern:` for format checks). The admin form at Admin → Integrations is generated from it. Optionally add an `IntegrationTester` for the "Test connection" button.
+
+**An email provider** (`IntegrationType::Mail`) also gets `transport: AcmeMailTransport::class`: a Symfony `TransportInterface` (extend `AbstractTransport`, copy `ResendTransport`) that reads its own settings with `enabledConfig()`. It then appears under Admin → Integrations → "Send email through" (`MailProviders`), next to ZeptoMail and Resend, with no change to the mailer.
 
 Read it where needed: `app(IntegrationManager::class)->enabledConfig('provider')` returns the fields, or `null` when disabled. Never log or return secrets, and never put them in Inertia props.
 

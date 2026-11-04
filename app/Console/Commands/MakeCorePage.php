@@ -78,7 +78,7 @@ class MakeCorePage extends Command
         }
 
         if ($page->permission !== null && $this->permissionIsMissing($page->permission)) {
-            $this->components->warn("The {$page->permission} permission does not exist yet. Add it to RolesAndPermissionsSeeder::PERMISSIONS, run `php artisan db:seed --class=RolesAndPermissionsSeeder`, then grant it to a role in Admin → Roles & permissions.");
+            $this->components->warn("The {$page->permission} permission does not exist yet. Register it in app/Providers/ProductServiceProvider.php with Permissions::define('{$page->permission}', '…', grantTo: ['admin']), run `php artisan ipile:sync-permissions`, then adjust who has it in Admin → Roles & permissions.");
         }
 
         $this->components->bulletList(array_filter([

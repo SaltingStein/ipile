@@ -9,7 +9,10 @@ use App\Services\Ai\Testers\OpenAiCompatibleTester;
 use App\Services\Ai\Testers\OpenAiTester;
 use App\Services\Ai\Testers\OpenRouterTester;
 use App\Services\Assistant\AssistantWidget;
+use App\Services\Mail\ResendTester;
+use App\Services\Mail\ResendTransport;
 use App\Services\Mail\ZeptoMailTester;
+use App\Services\Mail\ZeptoMailTransport;
 use App\Services\Media\BucketStorageTester;
 use App\Services\Media\MediaStorage;
 use App\Services\Payments\Flutterwave\FlutterwaveTester;
@@ -18,20 +21,63 @@ use App\Services\Payments\Paystack\PaystackTester;
 use App\Services\Payments\Squad\SquadTester;
 use App\Services\Security\Analysis\AnthropicTester;
 use App\Services\Sms\SmppTester;
+use InvalidArgumentException;
 
 /**
- * Every provider that can be configured from Admin → Integrations.
+ * Every provider that can be configured from Admin → Integrations: Ìpìlẹ̀'s own, then those added from
+ * service providers with {@see Integrations::define()}. Configuring a provider is never a code change.
  *
- * Adding a provider is a code change (a definition here plus its driver); configuring one never is.
  * Field lists are confirmed against each provider's documentation when its driver is built
  * (backlog CORE-802 payments, CORE-803 SMPP, CORE-804 ZeptoMail, CORE-805 Google Analytics).
  */
 class IntegrationCatalog
 {
     /**
-     * @return array<string, IntegrationDefinition> keyed by provider
+     * Providers added from service providers, keyed by provider.
+     *
+     * @var array<string, IntegrationDefinition>
+     */
+    private array $registered = [];
+
+    /**
+     * Add a provider. Replacing an existing one (one of Ìpìlẹ̀'s or an earlier registration) must be asked for.
+     *
+     * @throws InvalidArgumentException when the provider key exists and `$override` is false
+     */
+    public function register(IntegrationDefinition $definition, bool $override = false): void
+    {
+        if (! $override && $this->find($definition->provider) !== null) {
+            throw new InvalidArgumentException("Integration [{$definition->provider}] already exists. Use Integrations::override() to replace it.");
+        }
+
+        $this->registered[$definition->provider] = $definition;
+    }
+
+    /**
+     * @return array<string, IntegrationDefinition> keyed by provider: Ìpìlẹ̀'s first (an override keeps its place), then added ones
      */
     public function all(): array
+    {
+        return [...$this->builtIn(), ...$this->registered];
+    }
+
+    public function find(string $provider): ?IntegrationDefinition
+    {
+        return $this->all()[$provider] ?? null;
+    }
+
+    /**
+     * @return list<IntegrationDefinition> in catalog order
+     */
+    public function ofType(IntegrationType $type): array
+    {
+        return array_values(array_filter($this->all(), fn (IntegrationDefinition $definition) => $definition->type === $type));
+    }
+
+    /**
+     * @return array<string, IntegrationDefinition>
+     */
+    private function builtIn(): array
     {
         $definitions = [
             new IntegrationDefinition('paystack', IntegrationType::Payment, 'Paystack',
@@ -93,7 +139,16 @@ class IntegrationCatalog
                     new IntegrationField('api_host', 'API host', help: 'The host in the API URL shown in your ZeptoMail account, e.g. cpaas.zoho.com.', pattern: '/^([a-z0-9-]+\.)+(zoho|zeptomail)(\.[a-z]{2,})+$/i'),
                     new IntegrationField('from_address', 'From address', input: 'email', help: 'Must belong to a domain verified in ZeptoMail.'),
                     new IntegrationField('from_name', 'From name'),
-                ], ZeptoMailTester::class),
+                ], ZeptoMailTester::class, transport: ZeptoMailTransport::class),
+            new IntegrationDefinition(ResendTransport::PROVIDER, IntegrationType::Mail, 'Resend',
+                'Transactional email with a free plan (3,000 emails a month, up to 100 a day). Add and verify your sending domain in Resend first.', [
+                    new IntegrationField('api_key', 'API key', secret: true, help: 'From API Keys in Resend. Starts with re_. A key with "Sending access" is enough.', pattern: '/^re_[A-Za-z0-9_]+$/'),
+                    new IntegrationField('from_address', 'From address', input: 'email', help: 'Must belong to a domain verified in Resend (Domains).'),
+                    new IntegrationField('from_name', 'From name'),
+                ], ResendTester::class, [
+                    ['label' => 'Create a free Resend account', 'url' => 'https://resend.com/signup'],
+                    ['label' => 'Verify your domain', 'url' => 'https://resend.com/domains'],
+                ], ResendTransport::class),
             // No tester: Google serves the tag for any well-formed ID, so a "test" could not tell a typo from a real stream.
             new IntegrationDefinition('google_analytics', IntegrationType::Analytics, 'Google Analytics 4',
                 'Loads Google Analytics on every page, but only for visitors who accept analytics cookies (Admin → Consent notices). Page changes inside the app are counted by GA4 enhanced measurement ("Page changes based on browser history events", on by default). After enabling, check Realtime in Google Analytics.', [
@@ -166,10 +221,5 @@ class IntegrationCatalog
         }
 
         return $keyed;
-    }
-
-    public function find(string $provider): ?IntegrationDefinition
-    {
-        return $this->all()[$provider] ?? null;
     }
 }
