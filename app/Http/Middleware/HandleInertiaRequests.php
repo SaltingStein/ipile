@@ -79,7 +79,7 @@ class HandleInertiaRequests extends Middleware
             // Languages visitors can switch public pages to (Admin → Languages); null while translation is off.
             'siteLanguages' => fn () => app(TranslationSettings::class)->forVisitors(),
             // Shows the Assistant link in the workspace sidebar for people with a full account.
-            'assistantEnabled' => fn () => $user !== null && ! $user->is_guest && app(AssistantSettings::class)->enabled(),
+            'assistantEnabled' => fn () => $user !== null && ! $user->is_guest && $user->can('use_ai_assistant') && app(AssistantSettings::class)->enabled(),
             'assistantWidget' => fn () => app(AssistantWidget::class)->forUser($user),
             // Shows the Developer portal link in the workspace sidebar's Developers section.
             'developerPortalVisible' => fn () => $user !== null && ! $user->is_guest && app(ApiDocsSettings::class)->isVisibleTo($user),

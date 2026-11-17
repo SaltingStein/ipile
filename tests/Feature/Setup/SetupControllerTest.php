@@ -35,13 +35,13 @@ class SetupControllerTest extends TestCase
         $this->assertTrue(app(SuperAdminSetup::class)->keyMatches($key));
     }
 
-    public function test_valid_key_creates_a_verified_super_admin_and_signs_them_in(): void
+    public function test_valid_key_creates_a_verified_super_admin_and_sends_them_to_turn_on_two_factor(): void
     {
         $key = app(SuperAdminSetup::class)->issueKey();
 
         $response = $this->post(route('setup.store'), $this->validInput(['setup_key' => strtolower($key)]));
 
-        $response->assertRedirect(route('admin.index'));
+        $response->assertRedirect(route('security.show'));
         $user = User::query()->where('email', 'owner@example.com')->firstOrFail();
         $this->assertAuthenticatedAs($user);
         $this->assertTrue($user->hasRole('super_admin'));

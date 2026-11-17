@@ -1,4 +1,5 @@
 import AppBrand from './AppBrand';
+import AssistantBubble from './AssistantBubble';
 import BrandFooter from './BrandFooter';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -77,6 +78,11 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
                         <Link href="/dashboard" className="mt-4 rounded-lg border border-slate-800 px-3 py-2 text-sm text-slate-300 transition hover:border-slate-600 hover:text-slate-50">
                             Back to dashboard
                         </Link>
+                        <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-lg border border-slate-800 px-3 py-2 text-sm text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-400">
+                            View site
+                            <span aria-hidden="true">↗</span>
+                            <span className="sr-only">(opens in a new tab)</span>
+                        </a>
                     </nav>
                 </aside>
 
@@ -91,6 +97,7 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
                 </main>
             </div>
             <BrandFooter />
+            <AssistantBubble />
         </div>
     );
 }

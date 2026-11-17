@@ -11,6 +11,8 @@ final readonly class IntegrationDefinition
      * @param  list<IntegrationField>  $fields
      * @param  class-string<IntegrationTester>|null  $tester  Checks the credentials against the provider; null until its driver exists.
      * @param  list<array{label: string, url: string}>  $links  Where an operator gets an account and credentials (https, mailto: or tel:), shown on the provider's settings page.
+     * @param  class-string|null  $transport  The class that delivers through this provider, built by the container. For email
+     *                                        providers a Symfony `TransportInterface` that reads its own settings (see `ZeptoMailTransport`).
      */
     public function __construct(
         public string $provider,
@@ -20,6 +22,7 @@ final readonly class IntegrationDefinition
         public array $fields,
         public ?string $tester = null,
         public array $links = [],
+        public ?string $transport = null,
     ) {}
 
     public function field(string $name): ?IntegrationField

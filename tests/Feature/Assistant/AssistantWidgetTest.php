@@ -21,6 +21,16 @@ class AssistantWidgetTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Full accounts get the member role, and with it use_ai_assistant, once the roles exist.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
+
     private const SECRET = 'emb_test_secret_for_widget_signing_123456789';
 
     public function test_signed_claim_verifies_with_the_shared_secret_and_contains_only_a_mapped_role_opaque_visitor_and_expiry(): void
@@ -68,7 +78,8 @@ class AssistantWidgetTest extends TestCase
     {
         $this->seed(RolesAndPermissionsSeeder::class);
         $user = User::factory()->create()->assignRole(['member', 'admin']);
-        $superAdmin = User::factory()->create()->assignRole('super_admin');
+        // Only super_admin: the automatic member role would match the mapping below.
+        $superAdmin = User::factory()->create()->syncRoles(['super_admin']);
         $this->enableWidget(['role_mapping' => '{"member":"customer","admin":"staff"}']);
 
         $claim = $this->actingAs($user)->getJson(route('assistant.widget-claim'))->assertOk()->json('claim');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\Auth\AuthenticationSettings;
 use App\Services\Auth\OAuthProviderRegistry;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -25,7 +26,11 @@ class AuthenticationSettingsController extends Controller
         return Inertia::render('Admin/AuthenticationSettings', [
             'settings' => [
                 'registration_enabled' => $settings->registrationEnabled(),
+                'oauth_profile_required' => $settings->oauthProfileRequired(),
                 'guest_access_enabled' => $settings->guestAccessEnabled(),
+                'guest_button_label' => $settings->guestButtonLabel() ?? '',
+                'guest_field_label' => $settings->guestFieldLabel() ?? '',
+                'guest_retention_days' => $settings->guestRetentionDays(),
                 'magic_link_enabled' => $settings->magicLinkEnabled(),
                 'magic_link_expiry_minutes' => $settings->magicLinkExpiryMinutes(),
                 'trusted_device_days' => $settings->trustedDeviceDays(),
@@ -50,7 +55,17 @@ class AuthenticationSettingsController extends Controller
     {
         $validated = $request->validate([
             'registration_enabled' => ['required', 'boolean'],
+            'oauth_profile_required' => ['sometimes', 'boolean'],
             'guest_access_enabled' => ['sometimes', 'boolean'],
+            'guest_button_label' => ['sometimes', 'nullable', 'string', 'max:'.AuthenticationSettings::MAX_GUEST_LABEL_LENGTH],
+            'guest_field_label' => ['sometimes', 'nullable', 'string', 'max:'.AuthenticationSettings::MAX_GUEST_LABEL_LENGTH],
+            // 0 keeps guest accounts; otherwise at least a week, so a short value cannot wipe recent guests by mistake.
+            'guest_retention_days' => ['sometimes', 'integer', 'min:0', 'max:'.AuthenticationSettings::MAX_GUEST_RETENTION_DAYS,
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ((int) $value !== 0 && (int) $value < AuthenticationSettings::MIN_GUEST_RETENTION_DAYS) {
+                        $fail(__('Enter 0 to keep guest accounts, or at least :days days.', ['days' => AuthenticationSettings::MIN_GUEST_RETENTION_DAYS]));
+                    }
+                }],
             'magic_link_enabled' => ['sometimes', 'boolean'],
             'magic_link_expiry_minutes' => ['sometimes', 'integer', 'min:1', 'max:'.AuthenticationSettings::MAX_MAGIC_LINK_MINUTES],
             'trusted_device_days' => ['required', 'integer', 'min:0', 'max:365'],
@@ -62,11 +77,13 @@ class AuthenticationSettingsController extends Controller
 
         $settings->update([
             'registration_enabled' => (bool) $validated['registration_enabled'],
+            ...(array_key_exists('oauth_profile_required', $validated) ? ['oauth_profile_required' => (bool) $validated['oauth_profile_required']] : []),
             ...(array_key_exists('guest_access_enabled', $validated) ? ['guest_access_enabled' => (bool) $validated['guest_access_enabled']] : []),
             ...(array_key_exists('magic_link_enabled', $validated) ? ['magic_link_enabled' => (bool) $validated['magic_link_enabled']] : []),
+            ...array_intersect_key($validated, array_flip(['guest_button_label', 'guest_field_label'])),
             'trusted_device_days' => (int) $validated['trusted_device_days'],
             'two_factor_required_roles' => array_values(array_unique($validated['two_factor_required_roles'])),
-            ...array_map('intval', array_intersect_key($validated, array_flip(['api_token_lifetime_days', 'api_token_idle_days', 'magic_link_expiry_minutes']))),
+            ...array_map('intval', array_intersect_key($validated, array_flip(['api_token_lifetime_days', 'api_token_idle_days', 'magic_link_expiry_minutes', 'guest_retention_days']))),
         ]);
 
         return back()->with('status', __('Sign-in settings saved.'));

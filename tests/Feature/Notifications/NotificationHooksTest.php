@@ -6,6 +6,7 @@ use App\Listeners\SendNewSignInAlert;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\EventNotification;
+use App\Services\Auth\AuthenticationSettings;
 use App\Services\Auth\TwoFactorAuthenticator;
 use App\Services\Notifications\NotificationCatalog;
 use App\Services\Notifications\NotificationSettings;
@@ -39,7 +40,9 @@ class NotificationHooksTest extends TestCase
     {
         Notification::fake();
 
-        $this->post(route('guest.start'), ['nickname' => 'Ada']);
+        Setting::store(AuthenticationSettings::GUEST_ACCESS_ENABLED, '1');
+
+        $this->post(route('guest.start'), ['nickname' => 'Ada'])->assertRedirect(route('dashboard'));
 
         Notification::assertNothingSent();
     }

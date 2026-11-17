@@ -22,12 +22,32 @@ class SuperAdminSetup
 
     public const KEY_HASH = 'setup.key_hash';
 
+    public const COMPLETED_AT = 'setup.completed_at';
+
     /**
      * Setup is needed until at least one account holds the super admin role.
      */
     public function isRequired(): bool
     {
         return User::query()->whereHas('roles', fn ($query) => $query->where('name', self::ROLE))->doesntExist();
+    }
+
+    /**
+     * Cheap check for every request: once a super admin has existed, the cached setting answers without a query.
+     */
+    public function isComplete(): bool
+    {
+        if (Setting::valueOf(self::COMPLETED_AT) !== null) {
+            return true;
+        }
+
+        if ($this->isRequired()) {
+            return false;
+        }
+
+        Setting::store(self::COMPLETED_AT, now()->toIso8601String());
+
+        return true;
     }
 
     /**

@@ -7,13 +7,13 @@ This app is built on **Ìpìlẹ̀**, a reusable Laravel + Inertia React starter
 - Suggest the Ìpìlẹ̀ way briefly, with the reason. If the developer wants to do it differently, do it their way. Mention a trade-off once at most; do not repeat it or lecture.
 - Hold firm only on the non-negotiables below. If a request would break one, say so plainly and offer a safe way to get the same result.
 - Product-specific names are fine in product code. Only Ìpìlẹ̀'s own files stay domain-neutral.
-- When a request is ambiguous about **who** may do something, ask one short question before building. In particular: site-wide staff (a global permission such as `view_billing`) or people inside a team (the team's owner/admins through `TeamPolicy`)? And for settings: one value for the whole site, or one per team?
+- When a request is ambiguous about **who** may do something, ask one short question before building. In particular: site-wide staff (a global permission such as `view_billing`) or people inside a team (the team's owner/admins through `TeamPolicy`)? And for settings: one value for the whole site (`Setting`), or one per team (`TeamSetting`)?
 - This project does not use `.ai/rules`; Ìpìlẹ̀'s rules are this section and the `ipile-*` skills.
 
 ## Non-negotiables
 
 1. Admin pages and sensitive routes check a permission (`->middleware('permission:…')` or a policy). Being signed in is not enough: guest accounts are signed in too.
-2. Secrets (API keys, passwords) are stored encrypted and never sent to the browser. Third-party credentials go in Integrations (`IntegrationCatalog`).
+2. Secrets (API keys, passwords) are stored encrypted and never sent to the browser. Third-party credentials go in Integrations (`Integrations::define()`).
 3. Settings an operator might change live in the database and the admin area (the cached `Setting` model), not in `.env` or code. This includes AI providers: when using `laravel/ai`, get the provider with `app(AiModels::class)->provider('openai')` (configured in Admin → Integrations → AI models) instead of the `.env` keys the generic `ai-sdk-development` skill describes; everything else in that skill applies.
 4. New behaviour comes with a feature test.
 
@@ -24,10 +24,13 @@ This app is built on **Ìpìlẹ̀**, a reusable Laravel + Inertia React starter
 | Page routes | `routes/app.php` (Ìpìlẹ̀'s own are in `routes/web.php`) |
 | API routes | `routes/app-api.php`, inside the `v1` group (auto-documented at `/docs/api`) |
 | Sidebar links | `resources/js/appNavigation.ts` |
-| Admin menu entries | the matching group in `resources/js/adminNavigation.ts`, with the same permission as the route |
+| Admin menu entries | `resources/js/productAdminNavigation.ts` (a new group, or pages added to one of Ìpìlẹ̀'s groups by name), with the same permission as the route |
+| Permissions, notification events, integrations, Aegis events, assistant limits | registered from `app/Providers/ProductServiceProvider.php` (`Permissions::define()`, `Notify::define()`, `Integrations::define()`, `Security::define()`, `AssistantDataPolicy::block()`) |
 | Pages | `resources/js/pages/*.tsx`, wrapped in `AppLayout` (signed-in), `AdminLayout` (admin) or `PublicLayout` |
 | Shared UI | `resources/js/components/ui/*` (`Panel`, `StatTile`, `EmptyState`, `Button`, `TextField`, `Checkbox`, `StatusMessage`) |
 | End-user help | `resources/help/*.md` |
+
+Do not edit Ìpìlẹ̀'s own lists (`NotificationCatalog`, `IntegrationCatalog`, `PermissionRegistry`, `RolesAndPermissionsSeeder`, `adminNavigation.ts`): register from `ProductServiceProvider` instead, so Ìpìlẹ̀ updates merge cleanly. The extension points are listed in the developer guide under "Extension points". After adding a permission, run `php artisan ipile:sync-permissions` (also on every deploy).
 
 New pages: prefer `php artisan ipile:page Name [--nav] [--permission=…] [--public] [--path=…] [--no-help]`. It creates the page, controller, route, test, optional sidebar link and a draft help article, and never overwrites files.
 

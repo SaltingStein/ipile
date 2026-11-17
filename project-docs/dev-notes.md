@@ -34,33 +34,35 @@ Notify::event('team.invitation')
 
 | Piece | Role |
 |---|---|
-| `app/Services/Notifications/NotificationCatalog.php` | Every event: key, channels, placeholders, default wording |
+| `app/Services/Notifications/NotificationCatalog.php` | Every event: key, channels, placeholders, default wording. Ìpìlẹ̀'s events, then those added with `Notify::define()` |
 | `app/Services/Notifications/Notify.php` | Entry point; returns a `PendingNotification` builder |
 | `app/Services/Notifications/NotificationSettings.php` | Reads and writes the dashboard choices; fills in `{placeholders}` |
 | `app/Notifications/EventNotification.php` | The Laravel notification that is actually sent |
 | `app/Notifications/Channels/SmsChannel.php` | SMS delivery through TelKo SMS (SMPP) in Integrations |
 
-- **Email** goes through the `dashboard` mailer: ZeptoMail when it is enabled in Admin → Integrations, otherwise the fallback mailer.
+- **Email** goes through the `dashboard` mailer: the provider chosen under Admin → Integrations → "Send email through" (ZeptoMail, Resend or one a product added with `Integrations::define()`), else the first one switched on, otherwise the fallback mailer (`MailProviders`).
 - **SMS** is skipped when TelKo SMS is not enabled, or when the recipient has no phone number (`users.phone_number`).
 - **Failures never break the caller.** If sending fails, the error is reported to the log and the action that triggered it (a payment webhook, a sign-up) still completes.
 - Laravel's own **verification** and **password reset** emails keep their notification classes, but their wording comes from the `auth.verify_email` and `auth.password_reset` templates (see `AppServiceProvider`).
 
 ### Adding an event
 
-**1. Describe it** in `NotificationCatalog::all()`:
+**1. Describe it** in `boot()` of `app/Providers/ProductServiceProvider.php` (Ìpìlẹ̀'s own events are in `NotificationCatalog`; don't edit that file):
 
 ```php
-new NotificationEvent('account.suspended', 'Account', 'Account suspended',
+Notify::define(new NotificationEvent('account.suspended', 'Account', 'Account suspended',
     'Sent when an administrator suspends an account.',           // shown in the dashboard
-    $mailAndSms,                                                 // channels it can use
-    $mail,                                                       // channels on by default
+    [NotificationEvent::MAIL, NotificationEvent::SMS],           // channels it can use
+    [NotificationEvent::MAIL],                                   // channels on by default
     ['reason' => 'Unusual activity', 'link' => url('/contact')], // placeholders => example values (used by "Send test")
     'Your {app_name} account has been suspended',                // default email subject
     "Your account was suspended on {time}.\n\nReason: {reason}", // default email body; a blank line starts a new paragraph
     '{app_name}: your account was suspended. Reason: {reason}',  // default SMS text, or null for email only
     'Contact support',                                           // optional email button; it opens {link}
-),
+));
 ```
+
+- A key that already exists throws. To change the defaults of one of Ìpìlẹ̀'s events, use `Notify::override()` with the same key.
 
 - `{name}`, `{app_name}` and `{time}` are available in every event. Don't list them.
 - Add `required: true` only when people cannot use their account without the email (verification, password reset, invitations). Administrators can still edit the wording but cannot switch the email off.

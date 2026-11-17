@@ -4,6 +4,8 @@ import type { SharedPageProps } from '../types';
 
 /**
  * Collects a nickname and starts a guest session via the guest onboarding route.
+ * Shown only to visitors who are not signed in, and only while guest access is on (Admin → Sign-in & 2FA), which also
+ * holds optional wording that replaces the layout's button label and the field placeholder.
  * Styling is passed in so each landing layout can keep its own visual theme.
  */
 interface GuestStartFormProps {
@@ -13,8 +15,12 @@ interface GuestStartFormProps {
     errorClassName: string;
 }
 
+interface GuestStartWording {
+    guestStart?: { buttonLabel: string | null; fieldLabel: string | null };
+}
+
 export default function GuestStartForm({ buttonLabel, inputClassName, buttonClassName, errorClassName }: GuestStartFormProps) {
-    const { canStartGuest } = usePage<SharedPageProps>().props;
+    const { auth, canStartGuest, guestStart } = usePage<SharedPageProps & GuestStartWording>().props;
     const { data, setData, post, processing, errors } = useForm({
         nickname: '',
     });
@@ -24,9 +30,11 @@ export default function GuestStartForm({ buttonLabel, inputClassName, buttonClas
         post('/guest/start');
     }
 
-    if (!canStartGuest) {
+    if (!canStartGuest || auth.user) {
         return null;
     }
+
+    const fieldLabel = guestStart?.fieldLabel ?? 'Pick a nickname';
 
     return (
         <form onSubmit={submit} className="flex flex-col gap-2">
@@ -34,8 +42,8 @@ export default function GuestStartForm({ buttonLabel, inputClassName, buttonClas
                 <input
                     type="text"
                     name="nickname"
-                    aria-label="Nickname"
-                    placeholder="Pick a nickname"
+                    aria-label={fieldLabel}
+                    placeholder={fieldLabel}
                     minLength={2}
                     maxLength={20}
                     required
@@ -44,7 +52,7 @@ export default function GuestStartForm({ buttonLabel, inputClassName, buttonClas
                     className={inputClassName}
                 />
                 <button type="submit" disabled={processing} className={`${buttonClassName} disabled:opacity-60`}>
-                    {buttonLabel}
+                    {guestStart?.buttonLabel ?? buttonLabel}
                 </button>
             </div>
             {errors.nickname && <p className={errorClassName}>{errors.nickname}</p>}

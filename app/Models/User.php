@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Auth\DefaultRole;
 use App\Services\Auth\TwoFactorAuthenticator;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,6 +25,22 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
+
+    /**
+     * New full accounts, and guests who create a full account, get the default role ({@see DefaultRole}).
+     */
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            app(DefaultRole::class)->assignTo($user);
+        });
+
+        static::updated(function (User $user): void {
+            if ($user->wasChanged('is_guest')) {
+                app(DefaultRole::class)->assignTo($user);
+            }
+        });
+    }
 
     protected $fillable = [
         'name',

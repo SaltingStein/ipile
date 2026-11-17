@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\MarketingSettingsController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MarketingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,5 +25,13 @@ Route::middleware(['auth', 'auth.session', 'two-factor.configured'])->group(func
     // ipile:page adds signed-in pages above this line.
 });
 
+// Site-wide marketing controls.
+Route::middleware(['auth', 'auth.session', 'two-factor.configured', 'permission:manage_settings'])->group(function () {
+    Route::get('/admin/marketing', [MarketingSettingsController::class, 'edit'])->name('admin.marketing.edit');
+    Route::put('/admin/marketing', [MarketingSettingsController::class, 'update'])
+        ->middleware('security.track:admin.settings_changed')->name('admin.marketing.update');
+});
+
 // Public pages anyone can open, signed in or not.
+Route::get('/marketing', MarketingController::class)->name('marketing');
 // ipile:page adds public pages above this line.

@@ -43,6 +43,22 @@ class LegalContentControllerTest extends TestCase
         $this->getJson('/api/v1/legal')->assertOk()->assertExactJson(['data' => []]);
     }
 
+    public function test_migrating_creates_missing_drafts_without_touching_existing_documents(): void
+    {
+        $this->assertEqualsCanonicalizing(['privacy', 'terms', 'cookies'], LegalDocument::query()->pluck('slug')->all());
+        $this->assertSame(0, LegalDocument::query()->where('version', '>', 0)->count());
+
+        LegalDocument::query()->where('slug', 'privacy')->update(['body' => 'Custom draft']);
+        LegalDocument::query()->where('slug', 'terms')->delete();
+
+        $migration = require database_path('migrations/2026_11_17_102411_create_default_legal_drafts.php');
+        $migration->up();
+
+        $this->assertSame('Custom draft', LegalDocument::query()->where('slug', 'privacy')->value('body'));
+        $this->assertSame(LegalDocument::DEFAULT_DRAFTS['terms']['body'], LegalDocument::query()->where('slug', 'terms')->value('body'));
+        $this->getJson('/api/v1/legal')->assertOk()->assertExactJson(['data' => []]);
+    }
+
     public function test_editor_can_save_a_draft_but_cannot_publish(): void
     {
         $editor = $this->actor(['edit_legal_content']);

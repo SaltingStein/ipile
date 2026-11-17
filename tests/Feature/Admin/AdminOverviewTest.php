@@ -25,7 +25,7 @@ class AdminOverviewTest extends TestCase
 
     public function test_overview_opens_for_anyone_who_can_reach_an_admin_page(): void
     {
-        foreach (['manage_settings', 'edit_legal_content', 'publish_legal_content', 'manage_access', 'manage_integrations', 'view_security', 'manage_security'] as $permission) {
+        foreach (['manage_settings', 'edit_legal_content', 'publish_legal_content', 'manage_access', 'manage_integrations', 'view_security', 'manage_security', 'view_ai_activity'] as $permission) {
             $this->actingAs($this->actor([$permission]))->get(route('admin.index'))->assertOk()
                 ->assertInertia(fn (Assert $page) => $page->component('Admin/Overview'));
         }

@@ -6,6 +6,7 @@ use App\Ai\Agents\AssistantRequestScreen;
 use App\Ai\Agents\SiteAssistant;
 use App\Ai\Tools\AssistantTool;
 use App\Ai\Tools\SearchSiteGuide;
+use App\Models\AiInteraction;
 use App\Models\SecurityEvent;
 use App\Models\Setting;
 use App\Models\User;
@@ -100,9 +101,10 @@ class AssistantIntentRouterTest extends TestCase
 
         SiteAssistant::assertPrompted(fn (AgentPrompt $prompt) => $prompt->agent->mode === AssistantIntent::CoreGuidance
             && $this->hasTool($prompt, SearchSiteGuide::class));
-        $event = SecurityEvent::query()->where('type', 'assistant.message_routed')->sole();
-        $this->assertSame(['intent' => 'core_guidance', 'mode' => 'core_guidance', 'channel' => 'page', 'fallback' => false], $event->context);
-        $this->assertTrue($event->user->is($admin));
+        $interaction = AiInteraction::query()->sole();
+        $this->assertSame(['core_guidance', 'core_guidance', 'page', AiInteraction::ANSWERED], [$interaction->intent, $interaction->mode, $interaction->channel, $interaction->outcome]);
+        $this->assertTrue($interaction->user->is($admin));
+        $this->assertDatabaseMissing('security_events', ['type' => 'assistant.scope_denied']);
     }
 
     public function test_people_without_the_permission_get_the_normal_assistant_without_internal_guides(): void
@@ -115,7 +117,8 @@ class AssistantIntentRouterTest extends TestCase
 
         SiteAssistant::assertPrompted(fn (AgentPrompt $prompt) => $prompt->agent->mode === AssistantIntent::EndUserSupport
             && ! $this->hasTool($prompt, SearchSiteGuide::class));
-        $this->assertTrue(SecurityEvent::query()->where('type', 'assistant.message_routed')->sole()->context['fallback']);
+        $this->assertSame(AiInteraction::DENIED_BY_SCOPE, AiInteraction::query()->sole()->outcome);
+        $this->assertSame(['intent' => 'core_guidance', 'channel' => 'page'], SecurityEvent::query()->where('type', 'assistant.scope_denied')->sole()->context);
     }
 
     public function test_a_follow_up_stays_in_the_staff_mode_and_new_conversations_start_fresh(): void
@@ -143,7 +146,7 @@ class AssistantIntentRouterTest extends TestCase
 
         SiteAssistant::assertNeverPrompted();
         $this->assertDatabaseHas('security_events', ['type' => 'assistant.sensitive_request', 'user_id' => $admin->id]);
-        $this->assertDatabaseMissing('security_events', ['type' => 'assistant.message_routed']);
+        $this->assertSame(AiInteraction::REFUSED, AiInteraction::query()->sole()->outcome);
     }
 
     public function test_builder_tools_limited_to_staff_modes_never_reach_the_product_facing_assistant(): void

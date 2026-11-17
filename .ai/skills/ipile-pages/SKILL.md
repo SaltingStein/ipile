@@ -23,7 +23,7 @@ Then:
 
 ## Permissions
 
-- New permission: add it to `RolesAndPermissionsSeeder::PERMISSIONS` (and to a role in `ROLES` if it should be granted by default), then `php artisan db:seed --class=RolesAndPermissionsSeeder`. `ipile:page` warns when the permission does not exist yet.
+- New permission: register it in `boot()` of `app/Providers/ProductServiceProvider.php` with `Permissions::define('view_reports', 'See the reports pages', grantTo: ['admin'])` (add `admin: true` when it opens an admin page, so its holders can open `/admin`), then run `php artisan ipile:sync-permissions`. Default grants apply only when the permission is first created; sync never removes grants admins changed. `ipile:page` warns when the permission does not exist yet, and a test fails if a route names an unregistered permission.
 - Route: `->middleware('permission:view_reports')`. This is the real protection.
 - UI: `<Can perform="view_reports">…</Can>` or `user.permissions.includes(...)` together with `user.is_super_admin`. Hiding is a convenience only.
 - Super admins pass every check through `Gate::before`.
@@ -63,7 +63,7 @@ Then in the controller: `Gate::authorize('viewInvoices', $team)` with `$team = $
 ## Sidebar and admin menu
 
 - Workspace sidebar: `resources/js/appNavigation.ts` entries `{ label, href, permission? }`.
-- Admin pages go in a group of `resources/js/adminNavigation.ts` with the same permissions as the route, and use `AdminLayout`. Pick by purpose: Appearance (look, menus and languages), Post manager (blog), Forms, Campaigns (landing pages), Security (access and monitoring), Platform (connected services, messages, the site assistant), Developers (API access and docs), Legal & privacy. For product features, add a group named after the product area (e.g. "Billing") rather than squeezing them into Ìpìlẹ̀'s groups.
+- Admin pages go in `resources/js/productAdminNavigation.ts` (never edit `adminNavigation.ts`, which is Ìpìlẹ̀'s) with the same permissions as the route, and use `AdminLayout`. An entry is a new group `{ title, description, sections }` or pages added to one of Ìpìlẹ̀'s groups `{ group: 'Platform', sections }`. Ìpìlẹ̀'s groups by purpose: Appearance (look, menus and languages), Post manager (blog), Forms, Campaigns (landing pages), Security (access and monitoring), Platform (connected services, messages, the site assistant), Developers (API access and docs), Legal & privacy. For product features, add a group named after the product area (e.g. "Billing") rather than squeezing them into Ìpìlẹ̀'s groups.
 - Operators can add links without code in Admin → Appearance → Menus; do not duplicate those.
 
 ## Dashboard

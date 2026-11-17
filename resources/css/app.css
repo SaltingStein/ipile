@@ -17,6 +17,25 @@
  * follows the theme without per-theme classes. "fintech" is the Tailwind default palette.
  * Avoid `white`/`black` for text and surfaces; use slate-50 / slate-950 so light themes can invert them.
  */
+.ipile-marketing {
+    color-scheme: light;
+    --color-slate-50: #143f31;
+    --color-slate-100: #143f31;
+    --color-slate-200: #345b49;
+    --color-slate-300: #345b49;
+    --color-slate-400: #526455;
+    --color-slate-500: #526455;
+    --color-slate-600: #88957b;
+    --color-slate-700: #cdd3bd;
+    --color-slate-800: #d7d9c9;
+    --color-slate-900: #fffdf5;
+    --color-slate-950: #f8f5e9;
+    --color-emerald-300: #145440;
+    --color-emerald-400: #145440;
+    --color-emerald-500: #145440;
+    --color-emerald-600: #145440;
+}
+
 :root {
     color-scheme: dark;
 }
@@ -187,6 +206,17 @@
 .assistant-reply h2,
 .assistant-reply h3 {
     @apply text-sm font-semibold text-slate-50;
+}
+/* Tables, mostly from the Analytics mode's figures: scroll sideways in a narrow bubble. */
+.assistant-reply table {
+    @apply block max-w-full overflow-x-auto border-collapse text-xs tabular-nums;
+}
+.assistant-reply th,
+.assistant-reply td {
+    @apply border border-slate-700 px-2 py-1 text-left;
+}
+.assistant-reply th {
+    @apply bg-slate-900 font-semibold text-slate-50;
 }
 
 /* YouTube and Vimeo players in blog posts and campaign pages. */

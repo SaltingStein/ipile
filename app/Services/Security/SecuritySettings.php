@@ -3,6 +3,7 @@
 namespace App\Services\Security;
 
 use App\Models\Setting;
+use App\Services\Ai\AnthropicApi;
 
 /**
  * Dashboard-managed Aegis options (Admin → Security → Settings). Nothing here is read from .env.
@@ -22,6 +23,9 @@ class SecuritySettings
     public const AI_ENABLED = 'security.ai_enabled';
 
     public const AI_THRESHOLD = 'security.ai_threshold';
+
+    /** The AI model (Admin → Integrations → AI models) the analyst uses. Unset means Anthropic, as before CORE-910. */
+    public const AI_PROVIDER = 'security.ai_provider';
 
     public const LAST_TRAINED_AT = 'security.last_trained_at';
 
@@ -113,11 +117,19 @@ class SecuritySettings
     }
 
     /**
-     * Whether incidents are sent to the AI analyst (it also needs the Anthropic integration to be enabled).
+     * Whether incidents are sent to the AI analyst (it also needs its AI model, {@see analysisProvider()}, to be switched on).
      */
     public function aiEnabled(): bool
     {
         return Setting::valueOf(self::AI_ENABLED, '0') === '1';
+    }
+
+    /**
+     * The AI model provider key the analyst uses, or null when none is chosen.
+     */
+    public function analysisProvider(): ?string
+    {
+        return Setting::valueOf(self::AI_PROVIDER, AnthropicApi::PROVIDER) ?: null;
     }
 
     public function aiThreshold(): int
@@ -136,7 +148,7 @@ class SecuritySettings
     }
 
     /**
-     * @return array{mode: string, thresholds: array<string, int|null>, incident_threshold: int, disabled_categories: list<string>, retention_days: int, ai_enabled: bool, ai_threshold: int}
+     * @return array{mode: string, thresholds: array<string, int|null>, incident_threshold: int, disabled_categories: list<string>, retention_days: int, ai_enabled: bool, ai_threshold: int, ai_provider: string|null}
      */
     public function toArray(): array
     {
@@ -148,13 +160,14 @@ class SecuritySettings
             'retention_days' => $this->retentionDays(),
             'ai_enabled' => $this->aiEnabled(),
             'ai_threshold' => $this->aiThreshold(),
+            'ai_provider' => $this->analysisProvider(),
         ];
     }
 
     /**
      * Persist the dashboard-managed options.
      *
-     * @param  array{mode: string, thresholds: array<string, int|null>, incident_threshold: int, disabled_categories: list<string>, retention_days: int, ai_enabled: bool, ai_threshold: int}  $settings
+     * @param  array{mode: string, thresholds: array<string, int|null>, incident_threshold: int, disabled_categories: list<string>, retention_days: int, ai_enabled: bool, ai_threshold: int, ai_provider?: string|null}  $settings
      */
     public function update(array $settings): void
     {
@@ -171,5 +184,9 @@ class SecuritySettings
         Setting::store(self::RETENTION_DAYS, (string) $settings['retention_days']);
         Setting::store(self::AI_ENABLED, $settings['ai_enabled'] ? '1' : '0');
         Setting::store(self::AI_THRESHOLD, (string) $settings['ai_threshold']);
+
+        if (array_key_exists('ai_provider', $settings)) {
+            Setting::store(self::AI_PROVIDER, (string) $settings['ai_provider']);
+        }
     }
 }

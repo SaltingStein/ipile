@@ -7,7 +7,9 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsRegistered;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectIfRegistered;
+use App\Http\Middleware\RedirectToSetup;
 use App\Http\Middleware\TrackSecurityEvent;
+use App\Services\Setup\InstallationCheck;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -43,9 +45,13 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             EnsureUserIsActive::class,
             EnforceSecurityStepUp::class,
+            RedirectToSetup::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // A fresh deploy without an app key or database tables gets the install steps instead of an error page.
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(InstallationCheck::class)->render($exception, $request));
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

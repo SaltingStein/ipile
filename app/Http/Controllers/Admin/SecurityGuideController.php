@@ -61,8 +61,8 @@ class SecurityGuideController extends Controller
                     'label' => 'AI analyst (optional)',
                     'ok' => $settings->aiEnabled() && $analyst->isAvailable() ? true : null,
                     'detail' => $analyst->isAvailable()
-                        ? ($settings->aiEnabled() ? 'Incidents scoring '.$settings->aiThreshold().' or more are sent for analysis.' : 'The Anthropic integration is enabled; turn on AI analysis in Monitoring settings.')
-                        : 'Enable Anthropic Claude under Admin → Integrations, then turn on AI analysis in Monitoring settings.',
+                        ? ($settings->aiEnabled() ? 'Incidents scoring '.$settings->aiThreshold().' or more are sent for analysis.' : 'Its AI model is ready; turn on AI analysis in Monitoring settings.')
+                        : 'Switch on an AI model under Admin → Integrations → AI models, choose it for the analyst in Monitoring settings, then turn on AI analysis.',
                 ],
             ],
             'modes' => array_map(fn (SecurityMode $option) => ['label' => $option->label(), 'description' => $option->description()], SecurityMode::cases()),
